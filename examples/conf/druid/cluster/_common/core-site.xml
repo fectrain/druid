@@ -1,0 +1,209 @@
+  <configuration  xmlns:xi="http://www.w3.org/2001/XInclude">
+    
+    <property>
+      <name>fs.defaultFS</name>
+      <value>hdfs://R2</value>
+    </property>
+    
+    <property>
+      <name>fs.defaultFS.hdfs_dev_client</name>
+      <value>viewfs://dev</value>
+    </property>
+    
+    <property>
+      <name>fs.defaultFS.hdfs_staging_client</name>
+      <value>viewfs://staging</value>
+    </property>
+    
+    <property>
+      <name>fs.defaultFS.hdfs_test_client</name>
+      <value>viewfs://test</value>
+    </property>
+    
+    <property>
+      <name>fs.defaultFS.hdfs_uat_client</name>
+      <value>viewfs://uat</value>
+    </property>
+    
+    <property>
+      <name>fs.trash.interval</name>
+      <value>1440</value>
+    </property>
+    
+    <property>
+      <name>ha.health-monitor.check-interval.ms</name>
+      <value>2000</value>
+    </property>
+    
+    <property>
+      <name>ha.health-monitor.rpc-timeout.ms</name>
+      <value>180000</value>
+    </property>
+    
+    <property>
+      <name>ha.zookeeper.quorum</name>
+      <value>zkat001.zookeeper.data-infra.shopee.io:2104,zkat002.zookeeper.data-infra.shopee.io:2104,zkat003.zookeeper.data-infra.shopee.io:2104,zkat004.zookeeper.data-infra.shopee.io:2104,zkat005.zookeeper.data-infra.shopee.io:2104</value>
+    </property>
+    
+    <property>
+      <name>hadoop.http.staticuser.user</name>
+      <value>work</value>
+    </property>
+    
+    <property>
+      <name>hadoop.proxyuser.*</name>
+      <value>*</value>
+    </property>
+    
+    <property>
+      <name>hadoop.proxyuser.hive.groups</name>
+      <value>*</value>
+    </property>
+    
+    <property>
+      <name>hadoop.proxyuser.hive.hosts</name>
+      <value>*</value>
+    </property>
+    
+    <property>
+      <name>hadoop.proxyuser.work.groups</name>
+      <value>*</value>
+    </property>
+    
+    <property>
+      <name>hadoop.proxyuser.work.hosts</name>
+      <value>*</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.auth_to_local</name>
+      <value></value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.authentication</name>
+      <value>simple</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.authorization</name>
+      <value>false</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.group.mapping</name>
+      <value>org.apache.hadoop.security.ShellBasedUnixGroupsMapping</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.group.mapping.ldap.bind.password</name>
+      <value>ShopeeDE0227_$$</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.group.mapping.ldap.bind.user</name>
+      <value>cn=Manager,ou=Control,dc=shopee,dc=com</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.group.mapping.ldap.groupbase</name>
+      <value>ou=AirflowAndSpark,ou=ShopeeApps,dc=shopee,dc=com</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.group.mapping.ldap.posix.attr.uid.name</name>
+      <value>uid</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.group.mapping.ldap.search.attr.group.name</name>
+      <value>cn</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.group.mapping.ldap.search.attr.member</name>
+      <value>memberUid</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.group.mapping.ldap.search.filter.group</name>
+      <value>(objectClass=posixGroup)</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.group.mapping.ldap.search.filter.user</name>
+      <value>(&amp;(objectClass=posixAccount)(uid={0}))</value>
+    </property>
+    
+    <property>
+      <name>hadoop.security.group.mapping.ldap.userbase</name>
+      <value>dc=shopee,dc=com</value>
+    </property>
+    
+    <property>
+      <name>hadoop.tmp.dir</name>
+      <value>/tmp/${user.name}</value>
+    </property>
+    
+    <property>
+      <name>hadoop.zk.address</name>
+      <value>zkat001.zookeeper.data-infra.shopee.io:2104,zkat002.zookeeper.data-infra.shopee.io:2104,zkat003.zookeeper.data-infra.shopee.io:2104,zkat004.zookeeper.data-infra.shopee.io:2104,zkat005.zookeeper.data-infra.shopee.io:2104</value>
+    </property>
+    
+    <property>
+      <name>io.compression.codec.lzo.class</name>
+      <value>com.hadoop.compression.lzo.LzoCodec</value>
+    </property>
+    
+    <property>
+      <name>io.compression.codecs</name>
+      <value>org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.DefaultCodec,com.hadoop.compression.lzo.LzoCodec,com.hadoop.compression.lzo.LzopCodec,org.apache.hadoop.io.compress.BZip2Codec,org.apache.hadoop.io.compress.SnappyCodec</value>
+    </property>
+    
+    <property>
+      <name>io.file.buffer.size</name>
+      <value>131072</value>
+    </property>
+    
+    <property>
+      <name>io.serializations</name>
+      <value>org.apache.hadoop.io.serializer.WritableSerialization</value>
+    </property>
+    
+    <property>
+      <name>ipc.8888.backoff.enable</name>
+      <value>true</value>
+    </property>
+    
+    <property>
+      <name>ipc.client.connect.max.retries</name>
+      <value>50</value>
+    </property>
+    
+    <property>
+      <name>ipc.client.connect.timeout</name>
+      <value>90000</value>
+    </property>
+    
+    <property>
+      <name>ipc.client.connection.maxidletime</name>
+      <value>30000</value>
+    </property>
+    
+    <property>
+      <name>ipc.client.idlethreshold</name>
+      <value>8000</value>
+    </property>
+    
+    <property>
+      <name>ipc.server.listen.queue.size</name>
+      <value>256</value>
+      <final>true</final>
+    </property>
+    
+    <property>
+      <name>net.topology.script.file.name</name>
+      <value>/etc/hadoop/topology_script.py</value>
+    </property>
+    
+  </configuration>
