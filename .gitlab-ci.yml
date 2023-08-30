@@ -1,0 +1,5 @@
+job1:
+    only:
+      - spdi-27
+    script: 
+      - rsync -avl --port=8874 --delete ./ 10.131.228.107::druid_gitlab_27/  
