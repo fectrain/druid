@@ -49,7 +49,8 @@
 
   <Loggers>
     <Root level="info">
-      <AppenderRef ref="FileAppender"/>
+      <AppenderRef ref="Console"/>
+<!--      <AppenderRef ref="FileAppender"/>-->
     </Root>
 
     <!-- Set level="debug" to see stack traces for query errors -->
