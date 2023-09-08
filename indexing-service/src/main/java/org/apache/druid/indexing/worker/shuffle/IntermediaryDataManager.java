@@ -103,7 +103,7 @@ public interface IntermediaryDataManager
   )
   {
     return Paths.get(
-        supervisorTaskId,
+        supervisorTaskId.replace(':', '_'),
         StringUtils.format(
             "%s_%s",
             interval.getStart().toString(ISODateTimeFormat.basicDateTime()),
