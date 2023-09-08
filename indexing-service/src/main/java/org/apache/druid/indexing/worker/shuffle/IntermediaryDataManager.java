@@ -93,7 +93,7 @@ public interface IntermediaryDataManager
       int bucketId
   )
   {
-    return Paths.get(getPartitionDirPath(supervisorTaskId, interval, bucketId), subTaskId).toString();
+    return Paths.get(getPartitionDirPath(supervisorTaskId, interval, bucketId), subTaskId.replace(':', '_')).toString();
   }
 
   default String getPartitionDirPath(
