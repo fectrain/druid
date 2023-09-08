@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import org.apache.druid.indexing.common.TaskToolbox;
 import org.apache.druid.indexing.common.task.batch.parallel.DeepStoragePartitionStat;
 import org.apache.druid.java.util.common.IAE;
+import org.apache.druid.java.util.common.StringUtils;
 import org.apache.druid.segment.loading.DataSegmentPusher;
 import org.apache.druid.timeline.DataSegment;
 import org.apache.druid.timeline.partition.BucketNumberedShardSpec;
@@ -75,7 +76,12 @@ public class DeepStorageIntermediaryDataManager implements IntermediaryDataManag
         segment.getInterval(),
         bucketNumberedShardSpec.getBucketId() // we must use the bucket ID instead of partition ID
     );
-    return dataSegmentPusher.pushToPath(segmentDir, segment, SHUFFLE_DATA_DIR_PREFIX + "/" + partitionFilePath);
+    final String storageDirSuffix = StringUtils.format(
+        "%s/%d_index.zip",
+        SHUFFLE_DATA_DIR_PREFIX + "/" + partitionFilePath,
+        segment.getShardSpec().getPartitionNum()
+    );
+    return dataSegmentPusher.pushToPath(segmentDir, segment, storageDirSuffix);
   }
 
   @Override
