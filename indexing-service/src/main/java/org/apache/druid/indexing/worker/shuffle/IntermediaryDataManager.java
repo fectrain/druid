@@ -24,10 +24,8 @@ import org.apache.druid.guice.annotations.ExtensionPoint;
 import org.apache.druid.indexing.common.TaskToolbox;
 import org.apache.druid.indexing.common.task.batch.parallel.PartitionStat;
 import org.apache.druid.indexing.common.task.batch.parallel.ShuffleClient;
-import org.apache.druid.java.util.common.StringUtils;
 import org.apache.druid.timeline.DataSegment;
 import org.joda.time.Interval;
-import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.File;
 import java.io.IOException;
@@ -93,7 +91,7 @@ public interface IntermediaryDataManager
       int bucketId
   )
   {
-    return Paths.get(getPartitionDirPath(supervisorTaskId, interval, bucketId), subTaskId.replace(':', '_')).toString();
+    return Paths.get(getPartitionDirPath(supervisorTaskId, interval, bucketId), subTaskId).toString();
   }
 
   default String getPartitionDirPath(
@@ -103,12 +101,9 @@ public interface IntermediaryDataManager
   )
   {
     return Paths.get(
-        supervisorTaskId.replace(':', '_'),
-        StringUtils.format(
-            "%s_%s",
-            interval.getStart().toString(ISODateTimeFormat.basicDateTime()),
-            interval.getEnd().toString(ISODateTimeFormat.basicDateTime())
-        ),
+        supervisorTaskId,
+        interval.getStart().toString(),
+        interval.getEnd().toString(),
         String.valueOf(bucketId)
     ).toString();
   }
