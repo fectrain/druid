@@ -66,17 +66,21 @@ ARG TARGETARCH
 # Download bash-static binary to execute scripts that require bash.
 # Although bash-static supports multiple platforms, but there's no need for us to support all those platform, amd64 and arm64 are enough.
 #
-ARG BASH_URL_BASE="https://github.com/robxu9/bash-static/releases/download/5.1.016-1.2.3"
-RUN if [ "$TARGETARCH" = "arm64" ]; then \
-      BASH_URL="${BASH_URL_BASE}/bash-linux-aarch64" ; \
-    elif [ "$TARGETARCH" = "amd64" ]; then \
-      BASH_URL="${BASH_URL_BASE}/bash-linux-x86_64" ; \
-    else \
-      echo "Unsupported architecture ($TARGETARCH)" && exit 1; \
-    fi; \
-    echo "Downloading bash-static from ${BASH_URL}" \
-    && wget ${BASH_URL} -O /bin/bash \
-    && chmod 755 /bin/bash
+#ARG BASH_URL_BASE="https://github.com/robxu9/bash-static/releases/download/5.1.016-1.2.3"
+#RUN if [ "$TARGETARCH" = "arm64" ]; then \
+#      BASH_URL="${BASH_URL_BASE}/bash-linux-aarch64" ; \
+#    elif [ "$TARGETARCH" = "amd64" ]; then \
+#      BASH_URL="${BASH_URL_BASE}/bash-linux-x86_64" ; \
+#    else \
+#      echo "Unsupported architecture ($TARGETARCH)" && exit 1; \
+#    fi; \
+#    echo "Downloading bash-static from ${BASH_URL}" \
+#    && wget ${BASH_URL} -O /bin/bash \
+#    && chmod 755 /bin/bash
+
+# Can not access github, so download it
+COPY distribution/docker/bash-linux-x86_64 /bin/bash
+RUN chmod 755 /bin/bash
 
 RUN addgroup -S -g 1000 druid \
  && adduser -S -u 1000 -D -H -h /opt/druid -s /bin/sh -g '' -G druid druid
