@@ -1,5 +1,6 @@
 ---
 id: cluster
+===update===
 title: Clustered deployment
 sidebar_label: Clustered deployment
 ---
