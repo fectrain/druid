@@ -105,7 +105,8 @@ class SingleContainerTaskAdapterTest
         new PeonCommandContext(
             Collections.singletonList("foo && bar"),
             new ArrayList<>(),
-            new File("/tmp")
+            new File("/tmp"),
+            config.getCpuCoreInMicro()
         )
     );
 

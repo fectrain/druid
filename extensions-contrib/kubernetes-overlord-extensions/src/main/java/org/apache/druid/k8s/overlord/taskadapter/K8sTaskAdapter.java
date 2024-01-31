@@ -116,6 +116,7 @@ public abstract class K8sTaskAdapter implements TaskAdapter
         generateCommand(task),
         javaOpts(task),
         taskConfig.getBaseTaskDir(),
+        taskRunnerConfig.getCpuCoreInMicro(),
         node.isEnableTlsPort()
     );
     PodSpec podSpec = pod.getSpec();
@@ -179,7 +180,7 @@ public abstract class K8sTaskAdapter implements TaskAdapter
   {
     List<String> javaOpts = context.getJavaOpts();
     Optional<Long> optionalXmx = getJavaOptValueBytes("-Xmx", javaOpts);
-    long heapSize = HumanReadableBytes.parse("1g");
+    long heapSize = HumanReadableBytes.parse(DruidK8sConstants.DEFAULT_JAVA_HEAP_SIZE);
     if (optionalXmx.isPresent()) {
       heapSize = optionalXmx.get();
     }
@@ -276,7 +277,8 @@ public abstract class K8sTaskAdapter implements TaskAdapter
     mainContainer.setName("main");
     ResourceRequirements requirements = getResourceRequirements(
         mainContainer.getResources(),
-        containerSize
+        containerSize,
+        context.getCpuMicroCore()
     );
     mainContainer.setResources(requirements);
     return mainContainer;
@@ -411,10 +413,13 @@ public abstract class K8sTaskAdapter implements TaskAdapter
   }
 
   @VisibleForTesting
-  static ResourceRequirements getResourceRequirements(ResourceRequirements requirements, long containerSize)
+  static ResourceRequirements getResourceRequirements(ResourceRequirements requirements, long containerSize, int cpuMicroCore)
   {
     Map<String, Quantity> resourceMap = new HashMap<>();
-    resourceMap.put("cpu", new Quantity("1000", "m"));
+    resourceMap.put(
+        "cpu",
+        new Quantity(String.valueOf(cpuMicroCore > 0 ? cpuMicroCore : DruidK8sConstants.DEFAULT_CPU_MILLICORES), "m")
+    );
     resourceMap.put("memory", new Quantity(String.valueOf(containerSize)));
     ResourceRequirementsBuilder result = new ResourceRequirementsBuilder();
     if (requirements != null) {
