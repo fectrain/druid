@@ -56,7 +56,7 @@ public class BaseColumnarLongsFromGeneratorBenchmark extends BaseColumnarLongsBe
    * Value distributions to simulate various patterns of long column
    */
   @Param({
-      "sequential-1000"
+      "sequential-100"
   })
   String distribution;
 
@@ -130,7 +130,17 @@ public class BaseColumnarLongsFromGeneratorBenchmark extends BaseColumnarLongsBe
             true,
             1,
             zeroProbability,
-            Integer.MAX_VALUE - 61,
+            Integer.MAX_VALUE - 1001,
+            Integer.MAX_VALUE - 1
+        ).makeGenerator(SEED);
+      case "sequential-100":
+        return GeneratorColumnSchema.makeSequential(
+            distribution,
+            ValueType.LONG,
+            true,
+            1,
+            zeroProbability,
+            Integer.MAX_VALUE - 101,
             Integer.MAX_VALUE - 1
         ).makeGenerator(SEED);
       case "sequential-unique":
