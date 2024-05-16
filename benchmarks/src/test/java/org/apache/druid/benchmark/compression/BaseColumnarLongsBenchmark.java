@@ -63,7 +63,6 @@ public class BaseColumnarLongsBenchmark
   @Param({
       "zstd-longs",
       "lz4-longs",
-      "lz4-ts_delta",
       "zstd-auto",
       "lz4-auto",
       "zstd-ts_delta",

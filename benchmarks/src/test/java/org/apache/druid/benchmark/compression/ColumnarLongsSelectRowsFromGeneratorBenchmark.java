@@ -47,8 +47,8 @@ import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
 @Fork(value = 1)
-@Warmup(iterations = 5)
-@Measurement(iterations = 10)
+@Warmup(iterations = 1)
+@Measurement(iterations = 2)
 public class ColumnarLongsSelectRowsFromGeneratorBenchmark extends BaseColumnarLongsFromGeneratorBenchmark
 {
   /**
@@ -56,26 +56,18 @@ public class ColumnarLongsSelectRowsFromGeneratorBenchmark extends BaseColumnarL
    * {@link #setupFilters(int, double, String)}
    */
   @Param({
-      "0.1",
-      "0.25",
-      "0.5",
-      "0.6",
-      "0.75",
-      "0.8",
-      "0.9",
-      "0.95",
       "1.0"
   })
   private double filteredRowCountPercentage;
 
   @Param({
-      "random",
+//      "random",
       "contiguous-start",
-      "contiguous-end",
-      "contiguous-bitmap-start",
-      "contiguous-bitmap-end",
-      "chunky-1000",
-      "chunky-10000"
+//      "contiguous-end",
+//      "contiguous-bitmap-start",
+//      "contiguous-bitmap-end",
+//      "chunky-1000",
+//      "chunky-10000"
   })
   private String filterDistribution;
 
