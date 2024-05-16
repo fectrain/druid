@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 @Fork(value = 1)
 @Warmup(iterations = 1)
-@Measurement(iterations = 2)
+@Measurement(iterations = 1)
 public class ColumnarLongsEncodeDataFromGeneratorBenchmark extends BaseColumnarLongsFromGeneratorBenchmark
 {
   @Setup

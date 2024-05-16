@@ -34,7 +34,7 @@ public class EntireLayoutColumnarLongsSerializer implements ColumnarLongsSeriali
 {
   private static final MetaSerdeHelper<EntireLayoutColumnarLongsSerializer> META_SERDE_HELPER = MetaSerdeHelper
       .firstWriteByte((EntireLayoutColumnarLongsSerializer x) -> CompressedColumnarLongsSupplier.VERSION)
-      .writeInt(x -> x.numInserted)
+      .writeInt(EntireLayoutColumnarLongsSerializer::size)
       .writeInt(x -> 0)
       .writeSomething(CompressionFactory.longEncodingWriter(x -> x.writer, x -> CompressionStrategy.NONE));
 

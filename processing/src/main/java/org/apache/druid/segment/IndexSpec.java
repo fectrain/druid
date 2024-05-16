@@ -55,6 +55,7 @@ public class IndexSpec
   private final StringEncodingStrategy stringDictionaryEncoding;
   private final CompressionStrategy metricCompression;
   private final CompressionFactory.LongEncodingStrategy longEncoding;
+  private final CompressionFactory.LongEncodingStrategy timeEncoding;
 
   @Nullable
   private final CompressionStrategy jsonCompression;
@@ -63,19 +64,18 @@ public class IndexSpec
 
   /**
    * Creates an IndexSpec with the given storage format settings.
-   *
-   * @param bitmapSerdeFactory       type of bitmap to use (e.g. roaring or concise), null to use the default.
+   *  @param bitmapSerdeFactory       type of bitmap to use (e.g. roaring or concise), null to use the default.
    *                                 Defaults to the bitmap type specified by the (deprecated) "druid.processing.bitmap.type"
    *                                 setting, or, if none was set, uses the default defined in {@link BitmapSerde}
    * @param dimensionCompression     compression format for dimension columns, null to use the default.
    *                                 Defaults to {@link CompressionStrategy#DEFAULT_COMPRESSION_STRATEGY}
    * @param stringDictionaryEncoding encoding strategy for string dictionaries of dictionary encoded string columns
    * @param metricCompression        compression format for primitive type metric columns, null to use the default.
-   *                                 Defaults to {@link CompressionStrategy#DEFAULT_COMPRESSION_STRATEGY}
+*                                 Defaults to {@link CompressionStrategy#DEFAULT_COMPRESSION_STRATEGY}
    * @param longEncoding             encoding strategy for metric and dimension columns with type long, null to use the default.
-   *                                 Defaults to {@link CompressionFactory#DEFAULT_LONG_ENCODING_STRATEGY}
+*                                 Defaults to {@link CompressionFactory#DEFAULT_LONG_ENCODING_STRATEGY}
+   * @param timeEncoding
    * @param segmentLoader            specify a {@link SegmentizerFactory} which will be written to 'factory.json' and used to load
-   *                                 the written segment
    */
   @JsonCreator
   public IndexSpec(
@@ -84,6 +84,7 @@ public class IndexSpec
       @JsonProperty("stringDictionaryEncoding") @Nullable StringEncodingStrategy stringDictionaryEncoding,
       @JsonProperty("metricCompression") @Nullable CompressionStrategy metricCompression,
       @JsonProperty("longEncoding") @Nullable CompressionFactory.LongEncodingStrategy longEncoding,
+      @JsonProperty("timeEncoding") @Nullable CompressionFactory.LongEncodingStrategy timeEncoding,
       @JsonProperty("jsonCompression") @Nullable CompressionStrategy jsonCompression,
       @JsonProperty("segmentLoader") @Nullable SegmentizerFactory segmentLoader
   )
@@ -104,6 +105,9 @@ public class IndexSpec
     this.longEncoding = longEncoding == null
                         ? CompressionFactory.DEFAULT_LONG_ENCODING_STRATEGY
                         : longEncoding;
+    this.timeEncoding = timeEncoding == null
+                        ? CompressionFactory.DEFAULT_LONG_ENCODING_STRATEGY
+                        : timeEncoding;
     this.jsonCompression = jsonCompression;
     this.segmentLoader = segmentLoader;
   }
@@ -136,6 +140,12 @@ public class IndexSpec
   public CompressionFactory.LongEncodingStrategy getLongEncoding()
   {
     return longEncoding;
+  }
+
+  @JsonProperty
+  public CompressionFactory.LongEncodingStrategy getTimeEncoding()
+  {
+    return timeEncoding;
   }
 
   @JsonProperty
@@ -192,6 +202,7 @@ public class IndexSpec
         stringDictionaryEncoding,
         metricCompression,
         longEncoding,
+        timeEncoding,
         jsonCompression,
         segmentLoader
     );
@@ -206,6 +217,7 @@ public class IndexSpec
            ", stringDictionaryEncoding=" + stringDictionaryEncoding +
            ", metricCompression=" + metricCompression +
            ", longEncoding=" + longEncoding +
+           ", timeEncoding=" + timeEncoding +
            ", jsonCompression=" + jsonCompression +
            ", segmentLoader=" + segmentLoader +
            '}';
@@ -223,6 +235,8 @@ public class IndexSpec
     private CompressionStrategy metricCompression;
     @Nullable
     private CompressionFactory.LongEncodingStrategy longEncoding;
+    @Nullable
+    private CompressionFactory.LongEncodingStrategy timeEncoding;
     @Nullable
     private CompressionStrategy jsonCompression;
     @Nullable
@@ -258,6 +272,12 @@ public class IndexSpec
       return this;
     }
 
+    public Builder withTimeEncoding(CompressionFactory.LongEncodingStrategy timeEncoding)
+    {
+      this.timeEncoding = timeEncoding;
+      return this;
+    }
+
     public Builder withJsonCompression(CompressionStrategy jsonCompression)
     {
       this.jsonCompression = jsonCompression;
@@ -278,6 +298,7 @@ public class IndexSpec
           stringDictionaryEncoding,
           metricCompression,
           longEncoding,
+          timeEncoding,
           jsonCompression,
           segmentLoader
       );

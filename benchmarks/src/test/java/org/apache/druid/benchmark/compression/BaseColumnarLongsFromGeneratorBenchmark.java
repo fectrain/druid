@@ -42,11 +42,7 @@ public class BaseColumnarLongsFromGeneratorBenchmark extends BaseColumnarLongsBe
    * Controls the probability that any generated value will be a zero, to simulate sparely populated columns
    */
   @Param({
-      "0.0",
-      "0.25",
-      "0.5",
-      "0.75",
-      "0.95"
+      "0.0"
   })
   double zeroProbability;
 
@@ -60,32 +56,7 @@ public class BaseColumnarLongsFromGeneratorBenchmark extends BaseColumnarLongsBe
    * Value distributions to simulate various patterns of long column
    */
   @Param({
-      "enumerated-0-1",
-      "enumerated-full",
-      "normal-1-32",
-      "normal-40-1000",
-      "sequential-1000",
-      "sequential-unique",
-      "uniform-1",
-      "uniform-2",
-      "uniform-3",
-      "uniform-4",
-      "uniform-8",
-      "uniform-12",
-      "uniform-16",
-      "uniform-20",
-      "uniform-24",
-      "uinform-32",
-      "uniform-40",
-      "uniform-48",
-      "uniform-56",
-      "uniform-64",
-      "zipf-low-100",
-      "zipf-low-100000",
-      "zipf-low-32-bit",
-      "zipf-high-100",
-      "zipf-high-100000",
-      "zipf-high-32-bit"
+      "sequential-unique"
   })
   String distribution;
 

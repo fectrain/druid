@@ -19,16 +19,17 @@
 
 package org.apache.druid.segment.data;
 
+import com.google.common.primitives.Longs;
 import org.apache.druid.segment.writeout.WriteOutBytes;
 
 import javax.annotation.Nullable;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
-public class LongsLongEncodingWriter implements CompressionFactory.LongEncodingWriter
+public class TimestampDeltaEncodingWriter implements CompressionFactory.LongEncodingWriter
 {
 
   private final ByteBuffer orderBuffer;
@@ -38,10 +39,18 @@ public class LongsLongEncodingWriter implements CompressionFactory.LongEncodingW
   @Nullable
   private OutputStream outStream = null;
 
-  public LongsLongEncodingWriter(ByteOrder order)
+  private long base = -1;
+
+  private long prev = -1;
+
+  private int zeroCnt = 0;
+
+  private int encodedSize = 0;
+
+  public TimestampDeltaEncodingWriter(ByteOrder order)
   {
     this.order = order;
-    orderBuffer = ByteBuffer.allocate(Long.BYTES);
+    orderBuffer = ByteBuffer.allocate(Long.BYTES * 2);
     orderBuffer.order(order);
   }
 
@@ -56,7 +65,7 @@ public class LongsLongEncodingWriter implements CompressionFactory.LongEncodingW
   }
 
   @Override
-  public void setOutputStream(WriteOutBytes output)
+  public void setOutputStream(WriteOutBytes output) // 只有 entireLayout -
   {
     outBuffer = null;
     outStream = output;
@@ -66,30 +75,72 @@ public class LongsLongEncodingWriter implements CompressionFactory.LongEncodingW
   public void write(long value) throws IOException
   {
     if (outBuffer != null) {
-      outBuffer.putLong(value);
+      processVal(outBuffer, value);
     }
     if (outStream != null) {
-      orderBuffer.rewind();
-      orderBuffer.putLong(value);
-      outStream.write(orderBuffer.array());
+      orderBuffer.clear();
+      processVal(orderBuffer, value);
+      // 3种情况， 空 / 放一个 / 放两个
+      orderBuffer.flip();
+      if(orderBuffer.remaining() > 0) { // todo 还是有问题
+//        long val = orderBuffer.getLong();
+        byte[] a = Arrays.copyOfRange(orderBuffer.array(), orderBuffer.position(), orderBuffer.limit());
+        outStream.write(a); // 有可能超出
+      }
+    }
+  }
+
+  private void processVal(ByteBuffer buf, long value)
+  {
+    if (base == -1) {
+      base = value;
+      prev = base;
+      return;
+    }
+    if (value == prev) {
+      zeroCnt++;
+    } else {
+      if (zeroCnt != 0) {
+        buf.putLong(-zeroCnt);
+        zeroCnt = 0;
+      }
+      buf.putLong(value - prev);
+      encodedSize++;
+      prev = value;
     }
   }
 
   @Override
-  public void flush()
+  public void flush() throws IOException
   {
+    if (zeroCnt != 0) {
+      if (outBuffer != null) {
+        outBuffer.putLong(-zeroCnt);
+      }
+      if (outStream != null) {
+        orderBuffer.clear();
+        orderBuffer.putLong(-zeroCnt);
+        orderBuffer.flip();
+//        long val = orderBuffer.getLong();
+        outStream.write(Arrays.copyOfRange(orderBuffer.array(), orderBuffer.position(), orderBuffer.limit()));
+      }
+      zeroCnt = 0;
+    }
   }
 
   @Override
   public void putMeta(ByteBuffer metaOut, CompressionStrategy strategy)
   {
-    metaOut.put(strategy.getId()); // 为什么 不写 LONGS ？LONGS 是默认
+    metaOut.put(CompressionFactory.setEncodingFlag(strategy.getId()));
+    metaOut.put(CompressionFactory.LongEncodingFormat.TIMEATAMP_DELTA.getId());
+    metaOut.put(CompressionFactory.TIMESTAMP_DELTA_ENCODING_VERSION);
+    metaOut.putLong(base);
   }
 
   @Override
   public int metaSize()
   {
-    return 1;
+    return 1 + 1 + 1 + Long.BYTES;
   }
 
   @Override
@@ -101,12 +152,12 @@ public class LongsLongEncodingWriter implements CompressionFactory.LongEncodingW
   @Override
   public int getNumBytes(int values)
   {
-    return values * Long.BYTES;
+    return values * Long.BYTES; //只要是以long 形式存储的就是
   }
 
   @Override
   public int getEncodedSize()
   {
-    return 0;
+    return encodedSize;
   }
 }

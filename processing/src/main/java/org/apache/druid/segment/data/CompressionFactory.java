@@ -36,6 +36,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import static org.apache.druid.segment.data.CompressionFactory.LongEncodingStrategy.*;
+
 /**
  * Compression of metrics is done by using a combination of {@link CompressionStrategy}
  * and Encoding(such as {@link LongEncodingStrategy} for type Long). CompressionStrategy is unaware of the data type
@@ -62,7 +64,7 @@ public class CompressionFactory
     // No instantiation
   }
 
-  public static final LongEncodingStrategy DEFAULT_LONG_ENCODING_STRATEGY = LongEncodingStrategy.LONGS;
+  public static final LongEncodingStrategy DEFAULT_LONG_ENCODING_STRATEGY = LONGS;
 
   // encoding format for segments created prior to the introduction of encoding formats
   public static final LongEncodingFormat LEGACY_LONG_ENCODING_FORMAT = LongEncodingFormat.LONGS;
@@ -74,6 +76,13 @@ public class CompressionFactory
    * Byte 10 - 13 : number of bits per value
    */
   public static final byte DELTA_ENCODING_VERSION = 0x1;
+
+  /**
+   * Timestamp Delta Encoding Header v1:
+   * Byte 1 : version
+   * Byte 2 - 9 : base value
+   */
+  public static final byte TIMESTAMP_DELTA_ENCODING_VERSION = 0x1;
 
   /**
    * Table Encoding Header v1 :
@@ -135,7 +144,12 @@ public class CompressionFactory
     /**
      * LONGS strategy always encode the values using LONGS format
      */
-    LONGS;
+    LONGS,
+
+    /**
+     * TS_DELTA is only for timestamp column
+     */
+    TS_DELTA;
 
     @JsonValue
     @Override
@@ -175,6 +189,14 @@ public class CompressionFactory
       public LongEncodingReader getReader(ByteBuffer buffer, ByteOrder order)
       {
         return new TableLongEncodingReader(buffer);
+      }
+    },
+
+    TIMEATAMP_DELTA((byte) 0x2) {
+      @Override
+      public LongEncodingReader getReader(ByteBuffer buffer, ByteOrder order)
+      {
+        return new TimestampDeltaEncodingReader(buffer, order);
       }
     },
     /**
@@ -255,6 +277,8 @@ public class CompressionFactory
      * Get the number of bytes required to encoding the given number of values
      */
     int getNumBytes(int values);
+
+    int getEncodedSize();
   }
 
   static <T> MetaSerdeHelper.FieldWriter<T> longEncodingWriter(
@@ -329,7 +353,7 @@ public class CompressionFactory
       Closer closer
   )
   {
-    if (encodingStrategy == LongEncodingStrategy.AUTO) {
+    if (encodingStrategy == AUTO) {
       return new IntermediateColumnarLongsSerializer(
           columnName,
           segmentWriteOutMedium,
@@ -338,12 +362,13 @@ public class CompressionFactory
           compressionStrategy,
           closer
       );
-    } else if (encodingStrategy == LongEncodingStrategy.LONGS) {
+    } else{
+      CompressionFactory.LongEncodingWriter encodingWriter = getEncodingWriter(encodingStrategy, order);
       if (compressionStrategy == CompressionStrategy.NONE) {
         return new EntireLayoutColumnarLongsSerializer(
             columnName,
             segmentWriteOutMedium,
-            new LongsLongEncodingWriter(order)
+            encodingWriter
         );
       } else {
         return new BlockLayoutColumnarLongsSerializer(
@@ -351,13 +376,23 @@ public class CompressionFactory
             segmentWriteOutMedium,
             filenameBase,
             order,
-            new LongsLongEncodingWriter(order),
+            encodingWriter,
             compressionStrategy,
             closer
         );
       }
-    } else {
-      throw new IAE("unknown encoding strategy : %s", encodingStrategy.toString());
+    }
+}
+
+  private static LongEncodingWriter getEncodingWriter(LongEncodingStrategy encodingStrategy, ByteOrder order)
+  {
+    switch (encodingStrategy) {
+      case LONGS:
+        return new LongsLongEncodingWriter(order);
+      case TS_DELTA:
+        return new TimestampDeltaEncodingWriter(order);
+      default:
+        throw new IAE("unknown encoding strategy : %s", encodingStrategy.toString());
     }
   }
 

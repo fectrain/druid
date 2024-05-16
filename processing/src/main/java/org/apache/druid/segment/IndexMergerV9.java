@@ -45,6 +45,7 @@ import org.apache.druid.segment.column.ColumnFormat;
 import org.apache.druid.segment.column.ColumnHolder;
 import org.apache.druid.segment.column.TypeSignature;
 import org.apache.druid.segment.column.ValueType;
+import org.apache.druid.segment.data.CompressionFactory;
 import org.apache.druid.segment.data.GenericIndexed;
 import org.apache.druid.segment.incremental.IncrementalIndex;
 import org.apache.druid.segment.incremental.IncrementalIndexAdapter;
@@ -172,7 +173,7 @@ public class IndexMergerV9 implements IndexMerger
       SegmentWriteOutMediumFactory omf = segmentWriteOutMediumFactory != null ? segmentWriteOutMediumFactory
                                                                               : defaultSegmentWriteOutMediumFactory;
       log.debug("Using SegmentWriteOutMediumFactory[%s]", omf.getClass().getSimpleName());
-      SegmentWriteOutMedium segmentWriteOutMedium = omf.makeSegmentWriteOutMedium(outDir);
+      SegmentWriteOutMedium segmentWriteOutMedium = omf.makeSegmentWriteOutMedium(outDir); // 什么东西， 如果不做块压缩， 会写爆吗？
       closer.register(segmentWriteOutMedium);
       long startTime = System.currentTimeMillis();
       Files.asByteSink(new File(outDir, "version.bin")).write(Ints.toByteArray(IndexIO.V9_VERSION));
@@ -731,6 +732,9 @@ public class IndexMergerV9 implements IndexMerger
       IndexSpec indexSpec
   )
   {
+    CompressionFactory.LongEncodingStrategy encoding = columnName.equals("little_end_time")
+                                                       ? indexSpec.getTimeEncoding() // 不设置的话 默认是long
+                                                       : indexSpec.getLongEncoding();
     // If using default values for null use LongColumnSerializer to allow rollback to previous versions.
     if (NullHandling.replaceWithDefault()) {
       return LongColumnSerializer.create(
@@ -738,7 +742,7 @@ public class IndexMergerV9 implements IndexMerger
           segmentWriteOutMedium,
           columnName,
           indexSpec.getMetricCompression(),
-          indexSpec.getLongEncoding()
+          encoding
       );
     } else {
       return LongColumnSerializerV2.create(
@@ -746,7 +750,7 @@ public class IndexMergerV9 implements IndexMerger
           segmentWriteOutMedium,
           columnName,
           indexSpec.getMetricCompression(),
-          indexSpec.getLongEncoding(),
+          encoding,
           indexSpec.getBitmapSerdeFactory()
       );
     }

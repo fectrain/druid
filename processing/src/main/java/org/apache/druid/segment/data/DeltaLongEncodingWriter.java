@@ -40,7 +40,7 @@ public class DeltaLongEncodingWriter implements CompressionFactory.LongEncodingW
   @Override
   public void setBuffer(ByteBuffer buffer)
   {
-    serializer = VSizeLongSerde.getSerializer(bitsPerValue, buffer, buffer.position());
+    serializer = VSizeLongSerde.getSerializer(bitsPerValue, buffer, buffer.position()); // todo: 为什么 delta 也是用这个， 这个效率会更高吗？
   }
 
   @Override
@@ -81,6 +81,12 @@ public class DeltaLongEncodingWriter implements CompressionFactory.LongEncodingW
   public int getNumBytes(int values)
   {
     return VSizeLongSerde.getSerializedSize(bitsPerValue, values);
+  }
+
+  @Override
+  public int getEncodedSize()
+  {
+    return 0;
   }
 
   @Override

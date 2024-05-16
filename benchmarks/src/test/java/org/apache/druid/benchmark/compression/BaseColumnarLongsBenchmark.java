@@ -63,8 +63,11 @@ public class BaseColumnarLongsBenchmark
   @Param({
       "zstd-longs",
       "lz4-longs",
+      "lz4-ts_delta",
       "zstd-auto",
-      "lz4-auto"
+      "lz4-auto",
+      "zstd-ts_delta",
+      "lz4-ts_delta",
   })
   String encoding;
 
@@ -114,7 +117,7 @@ public class BaseColumnarLongsBenchmark
   }
 
   void setupFilters(int rows, double filteredRowCountPercentage, String filterDistribution)
-  {
+  { // 为什么通过row count 来确定 offset？
     final int filteredRowCount = (int) Math.floor(rows * filteredRowCountPercentage);
 
 
@@ -299,6 +302,39 @@ public class BaseColumnarLongsBenchmark
                 writeOutMedium.getCloser()
         );
         break;
+      case "lz4-ts_delta":
+        serializer = CompressionFactory.getLongSerializer(
+            encoding,
+            writeOutMedium,
+            "lz4-ts_delta",
+            ByteOrder.LITTLE_ENDIAN,
+            CompressionFactory.LongEncodingStrategy.TS_DELTA,
+            CompressionStrategy.LZ4,
+            writeOutMedium.getCloser()
+        );
+        break;
+      case "zstd-ts_delta":
+        serializer = CompressionFactory.getLongSerializer(
+            encoding,
+            writeOutMedium,
+            "lz4-ts_delta",
+            ByteOrder.LITTLE_ENDIAN,
+            CompressionFactory.LongEncodingStrategy.TS_DELTA,
+            CompressionStrategy.ZSTD,
+            writeOutMedium.getCloser()
+        );
+        break;
+      case "none-ts_delta":
+        serializer = CompressionFactory.getLongSerializer(
+            encoding,
+            writeOutMedium,
+            "lz4-ts_delta",
+            ByteOrder.LITTLE_ENDIAN,
+            CompressionFactory.LongEncodingStrategy.TS_DELTA,
+            CompressionStrategy.NONE,
+            writeOutMedium.getCloser()
+        );
+        break;
       default:
         throw new RuntimeException("unknown encoding");
     }
@@ -316,10 +352,13 @@ public class BaseColumnarLongsBenchmark
     switch (encoding) {
       case "lz4-longs":
       case "lz4-auto":
+      case "lz4-ts_delta":
       case "none-auto":
       case "none-longs":
+      case "none-ts_delta":
       case "zstd-auto":
       case "zstd-longs":
+      case "zstd-ts_delta":
         return CompressedColumnarLongsSupplier.fromByteBuffer(buffer, ByteOrder.LITTLE_ENDIAN).get();
     }
 

@@ -25,23 +25,46 @@ public class EntireLayoutColumnarLongsSupplier implements Supplier<ColumnarLongs
 {
 
   private final int totalSize;
-  private final CompressionFactory.LongEncodingReader reader;
+  private final CompressionFactory.LongEncodingReader baseReader;
 
   public EntireLayoutColumnarLongsSupplier(int totalSize, CompressionFactory.LongEncodingReader reader)
   {
     this.totalSize = totalSize;
-    this.reader = reader;
+    this.baseReader = reader;
   }
 
   @Override
   public ColumnarLongs get()
   {
-    return new EntireLayoutColumnarLongs();
+    if (baseReader instanceof TimestampDeltaEncodingReader) {
+      return new EntireLayoutColumnarLongs()
+      {
+        @Override
+        public void get(long[] out, int start, int length)
+        {
+          if (length <= 0) {
+            return;
+          }
+          reader.read(out, 0, start, length);
+        }
+
+        @Override
+        public void get(long[] out, int[] indexes, int length)
+        {
+          if (length <= 0) {
+            return;
+          }
+          reader.read(out, 0, indexes, length, 0, totalSize);
+        }
+      };
+    }
+    return new EntireLayoutColumnarLongs()
+    {};
   }
 
   private class EntireLayoutColumnarLongs implements ColumnarLongs
   {
-
+    final CompressionFactory.LongEncodingReader reader = baseReader.duplicate();
     @Override
     public int size()
     {

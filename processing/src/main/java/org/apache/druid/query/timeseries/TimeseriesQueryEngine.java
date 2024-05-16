@@ -193,7 +193,7 @@ public class TimeseriesQueryEngine
 
                       if (granularizer.getEndOffset() > granularizer.getStartOffset()) {
                         if (emptyBucket) {
-                          aggregators.init(buffer, 0);
+                          aggregators.init(buffer, 0); // 这里的buffer 是什么，空的吗？
                         }
 
                         aggregators.aggregateVector(

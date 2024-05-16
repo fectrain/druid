@@ -244,15 +244,15 @@ public class GenericIndexedWriter<T> implements DictionaryWriter<T>
   @Override
   public void write(@Nullable T objectToWrite) throws IOException
   {
-    if (objectsSorted && prevObject != null && strategy.compare(prevObject, objectToWrite) >= 0) {
+    if (objectsSorted && prevObject != null && strategy.compare(prevObject, objectToWrite) >= 0) { //strategy 的 compare 不是没实现嘛？
       objectsSorted = false;
     }
 
     // for compatibility with the format (see GenericIndexed javadoc for description of the format),
     // this field is used to store nullness marker, but in a better format this info can take 1 bit.
-    valuesOut.writeInt(objectToWrite == null ? GenericIndexed.NULL_VALUE_SIZE_MARKER : 0);
+    valuesOut.writeInt(objectToWrite == null ? GenericIndexed.NULL_VALUE_SIZE_MARKER : 0); //valuesOut 一般是heap吧？用来装压缩后数据
     if (objectToWrite != null) {
-      strategy.writeTo(objectToWrite, valuesOut);
+      strategy.writeTo(objectToWrite, valuesOut); // strategy是什么时候 构建的？ 这里值得应该就是LZ4
     }
 
     // Before updating the header, check if we need to switch to multi-file mode.

@@ -71,7 +71,7 @@ public class DecompressingByteBufferObjectStrategy implements ObjectStrategy<Res
     final ByteBuffer buf = bufHolder.get();
     buf.clear();
 
-    decompressor.decompress(buffer, numBytes, buf);
+    decompressor.decompress(buffer, numBytes, buf); // mark
     // Needed, because if e. g. if this compressed buffer contains 3-byte integers, it should be possible to getInt()
     // from the buffer, including padding. See CompressedVSizeColumnarIntsSupplier.bufferPadding().
     buf.limit(buf.capacity());

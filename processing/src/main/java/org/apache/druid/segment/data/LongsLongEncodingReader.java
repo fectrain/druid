@@ -30,7 +30,7 @@ public class LongsLongEncodingReader implements CompressionFactory.LongEncodingR
 
   public LongsLongEncodingReader(ByteBuffer fromBuffer, ByteOrder order)
   {
-    this.buffer = Memory.wrap(fromBuffer.slice(), order);
+    this.buffer = Memory.wrap(fromBuffer.slice(), order); // 原来是 slice 了
   }
 
   @Override
@@ -40,20 +40,21 @@ public class LongsLongEncodingReader implements CompressionFactory.LongEncodingR
   }
 
   @Override
-  public long read(int index)
+  public long read(int index) // index 这里表示第几个byte， index << 3 表示第几个bit
   {
     return buffer.getLong((long) index << 3);
   }
 
   @Override
   public void read(final long[] out, final int outPosition, final int startIndex, final int length)
-  {
+  { //startIndex是block中long的index
     buffer.getLongArray((long) startIndex << 3, out, outPosition, length);
   }
 
   @Override
-  public int read(long[] out, int outPosition, int[] indexes, int length, int indexOffset, int limit)
-  {
+  public int read(long[] out, int outPosition, int[] indexes, int length, int indexOffset, int limit) // 写得太难理解了， 重构一下
+  { // outPosition=0, indexes, length=100, indexOffset, limit=8192，
+    // outPosition + length = 100
     for (int i = 0; i < length; i++) {
       int index = indexes[outPosition + i] - indexOffset;
       if (index >= limit) {

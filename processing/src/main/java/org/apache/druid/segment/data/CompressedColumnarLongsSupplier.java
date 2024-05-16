@@ -107,10 +107,10 @@ public class CompressedColumnarLongsSupplier implements Supplier<ColumnarLongs>,
       CompressionStrategy compression = CompressionStrategy.LZF;
       CompressionFactory.LongEncodingFormat encoding = CompressionFactory.LEGACY_LONG_ENCODING_FORMAT;
       if (versionFromBuffer == VERSION) {
-        byte compressionId = buffer.get();
+        byte compressionId = buffer.get(); // strategy id  compressionId：-128 表示什么？
         if (CompressionFactory.hasEncodingFlag(compressionId)) {
-          encoding = CompressionFactory.LongEncodingFormat.forId(buffer.get());
-          compressionId = CompressionFactory.clearEncodingFlag(compressionId);
+          encoding = CompressionFactory.LongEncodingFormat.forId(buffer.get()); // encoding id 在这里
+          compressionId = CompressionFactory.clearEncodingFlag(compressionId); //  哈？
         }
         compression = CompressionStrategy.forId(compressionId);
       }

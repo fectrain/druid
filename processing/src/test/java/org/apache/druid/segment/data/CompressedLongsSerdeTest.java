@@ -42,11 +42,13 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.LongStream;
 
 @RunWith(Parameterized.class)
 public class CompressedLongsSerdeTest
@@ -55,6 +57,7 @@ public class CompressedLongsSerdeTest
   public static Iterable<Object[]> compressionStrategies()
   {
     List<Object[]> data = new ArrayList<>();
+//    data.add(new Object[]{CompressionFactory.LongEncodingStrategy.TS_DELTA, CompressionStrategy.NONE, ByteOrder.LITTLE_ENDIAN});
     for (CompressionFactory.LongEncodingStrategy encodingStrategy : CompressionFactory.LongEncodingStrategy.values()) {
       for (CompressionStrategy strategy : CompressionStrategy.values()) {
         data.add(new Object[]{encodingStrategy, strategy, ByteOrder.BIG_ENDIAN});
@@ -86,6 +89,17 @@ public class CompressedLongsSerdeTest
       65487435436632L, -43734526234564L
   };
   private final long[] values8 = {Long.MAX_VALUE, 0, 321, 15248425, 13523212136L, 63822, 3426, 96};
+  private final long[] values9 = new long[]{
+      1715569263000L,
+      1715569263000L,
+      1715569263000L,
+      1715569263000L,
+      1715569263001L,
+      1715569263002L,
+      1715569263003L,
+      1715569263003L,
+      1715569263003L
+  };
 
   // built test value with enough unique values to not use table encoding for auto strategy
   private static long[] addUniques(long[] val)
@@ -121,6 +135,7 @@ public class CompressedLongsSerdeTest
     testWithValues(values6);
     testWithValues(values7);
     testWithValues(values8);
+    testWithValues(values9);
   }
 
   @Test
@@ -174,6 +189,9 @@ public class CompressedLongsSerdeTest
 
   public void testValues(long[] values) throws Exception
   {
+    if (encodingStrategy.equals(CompressionFactory.LongEncodingStrategy.TS_DELTA)) {
+      Arrays.sort(values);
+    }
     SegmentWriteOutMedium segmentWriteOutMedium = new OffHeapMemorySegmentWriteOutMedium();
     ColumnarLongsSerializer serializer = CompressionFactory.getLongSerializer(
         "test",
@@ -204,6 +222,7 @@ public class CompressedLongsSerdeTest
         int b = (int) (ThreadLocalRandom.current().nextDouble() * values.length);
         int start = a < b ? a : b;
         int end = a < b ? b : a;
+//        int start = 1, end = 4;
         tryFill(longs, values, start, end - start);
       }
       testSupplierSerde(supplier, values);
@@ -217,10 +236,16 @@ public class CompressedLongsSerdeTest
   private void tryFill(ColumnarLongs indexed, long[] vals, final int startIndex, final int size)
   {
     long[] filled = new long[size];
-    indexed.get(filled, startIndex, size);
+    try {
+      indexed.get(filled, startIndex, size);
+    } catch (ArrayIndexOutOfBoundsException e) {
+      System.out.println("\nstartIndex: " + startIndex + ", \nsize: " + size + ", \nfilled: " );
+      throw new RuntimeException(e);
+    }
+
 
     for (int i = startIndex; i < filled.length; i++) {
-      Assert.assertEquals(vals[i + startIndex], filled[i]);
+      Assert.assertEquals("\nstartIndex: " + startIndex + ",\nsize: " + size + ",\ni: " + i, vals[i + startIndex], filled[i]);
     }
   }
 
@@ -232,10 +257,10 @@ public class CompressedLongsSerdeTest
     long[] vector = new long[256];
     int[] indices = new int[vals.length];
     for (int i = 0; i < indexed.size(); ++i) {
-      if (i % 256 == 0) {
+      if (i % 256 == 0) { // 不懂为什么加这个？
         indexed.get(vector, i, Math.min(256, indexed.size() - i));
       }
-      Assert.assertEquals(vals[i], indexed.get(i));
+      Assert.assertEquals("i：" + i+ ", \nvector:" +Arrays.toString(vector)+ "，\nvals："+ Arrays.toString(vals) + ", \nval[i]: " + vals[i], vals[i], indexed.get(i));
       Assert.assertEquals(vals[i], vector[i % 256]);
       indices[i] = i;
     }

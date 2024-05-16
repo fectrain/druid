@@ -56,28 +56,28 @@ public class BlockLayoutColumnarLongsSupplier implements Supplier<ColumnarLongs>
   @Override
   public ColumnarLongs get()
   {
-    final int div = Integer.numberOfTrailingZeros(sizePer);
+    final int div = Integer.numberOfTrailingZeros(sizePer); // 8192 - 13
     final int rem = sizePer - 1;
-    final boolean isPowerOf2 = sizePer == (1 << div);
+    final boolean isPowerOf2 = sizePer == (1 << div); // 这是对1 进行左移，又回到8192， 用这种方式判断是否是2的次方
     if (isPowerOf2) {
       // this provide slightly better performance than calling the LongsEncodingReader.read, probably because Java
       // doesn't inline the method call for some reason. This should be removed when test show that performance
       // of using read method is same as directly accessing the longbuffer
-      if (baseReader instanceof LongsLongEncodingReader) {
+      if (baseReader instanceof LongsLongEncodingReader) { //看下performance 高在哪里？
         return new BlockLayoutColumnarLongs()
         {
           @Override
-          public long get(int index)
+          public long get(int index) //8192 的话走这里，否则走下面分get() - Memory
           {
             // optimize division and remainder for powers of 2
-            final int bufferNum = index >> div;
+            final int bufferNum = index >> div; // 蛤？哦哦 右移13位， bufferNum 为什么是final， 为什么不 ++？
 
             if (bufferNum != currBufferNum) {
               loadBuffer(bufferNum);
             }
 
             final int bufferIndex = index & rem;
-            return longBuffer.get(bufferIndex);
+            return longBuffer.get(bufferIndex); // 直接连baseReader.read() 都不需要了吗？
           }
 
           @Override
@@ -158,8 +158,8 @@ public class BlockLayoutColumnarLongsSupplier implements Supplier<ColumnarLongs>
     public void get(final long[] out, final int start, final int length)
     {
       // division + remainder is optimized by the compiler so keep those together
-      int bufferNum = start / sizePer;
-      int bufferIndex = start % sizePer;
+      int bufferNum = start / sizePer; // 8192
+      int bufferIndex = start % sizePer; // 8192 中的位移 - 开始位置
 
       int p = 0;
 
@@ -178,10 +178,10 @@ public class BlockLayoutColumnarLongsSupplier implements Supplier<ColumnarLongs>
 
     @Override
     public void get(final long[] out, final int[] indexes, final int length)
-    {
+    { // 就是从 这么多个index 里面 读满length 长度， 因为index 是不连续的，可能散落在不同的 block， 每个block p 开始读到limit。 所以每个index 拿出来， 都要重新判断下 是否超过limit
       int p = 0;
 
-      while (p < length) {
+      while (p < length) { // p=0, len = 100
         int bufferNum = indexes[p] / sizePer;
         if (bufferNum != currBufferNum) {
           loadBuffer(bufferNum);
@@ -198,10 +198,10 @@ public class BlockLayoutColumnarLongsSupplier implements Supplier<ColumnarLongs>
       if (holder != null) {
         holder.close();
       }
-      holder = singleThreadedLongBuffers.get(bufferNum);
+      holder = singleThreadedLongBuffers.get(bufferNum); // 这里解压
       buffer = holder.get();
       currBufferNum = bufferNum;
-      reader.setBuffer(buffer);
+      reader.setBuffer(buffer); //这里是重复了？ 铁打的reader， 流水的buffer
     }
 
     @Override

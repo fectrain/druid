@@ -39,7 +39,7 @@ public class DeltaLongEncodingReader implements CompressionFactory.LongEncodingR
       base = buffer.getLong();
       bitsPerValue = buffer.getInt();
       fromBuffer.position(buffer.position());
-      deserializer = VSizeLongSerde.getDeserializer(bitsPerValue, buffer, buffer.position());
+      deserializer = VSizeLongSerde.getDeserializer(bitsPerValue, buffer, buffer.position()); // bitsPerValue 是全segment 统一的吗？ 不能变长？
     } else {
       throw new IAE("Unknown version[%s]", version);
     }

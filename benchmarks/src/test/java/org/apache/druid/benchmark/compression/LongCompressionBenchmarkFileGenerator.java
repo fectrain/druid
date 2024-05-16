@@ -57,7 +57,11 @@ public class LongCompressionBenchmarkFileGenerator
           CompressionStrategy.LZ4,
           CompressionStrategy.NONE);
   public static final List<CompressionFactory.LongEncodingStrategy> ENCODINGS =
-      ImmutableList.of(CompressionFactory.LongEncodingStrategy.AUTO, CompressionFactory.LongEncodingStrategy.LONGS);
+      ImmutableList.of(
+          CompressionFactory.LongEncodingStrategy.AUTO,
+          CompressionFactory.LongEncodingStrategy.LONGS,
+          CompressionFactory.LongEncodingStrategy.TS_DELTA
+      );
 
   private static String dirPath = "longCompress/";
 
@@ -143,6 +147,13 @@ public class LongCompressionBenchmarkFileGenerator
     for (Map.Entry<String, ColumnValueGenerator> entry : generators.entrySet()) {
       for (CompressionStrategy compression : COMPRESSIONS) {
         for (CompressionFactory.LongEncodingStrategy encoding : ENCODINGS) {
+
+          if (encoding.equals(CompressionFactory.LongEncodingStrategy.TS_DELTA)) {
+            if(!entry.getKey().equals("sequential")) { // 先只跑出 sequential 的看看
+              continue;
+            }
+          }
+
           String name = entry.getKey() + "-" + compression + "-" + encoding;
           log.info("%s: ", name);
           File compFile = new File(dir, name);

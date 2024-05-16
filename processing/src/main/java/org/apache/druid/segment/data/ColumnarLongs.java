@@ -47,7 +47,7 @@ public interface ColumnarLongs extends Closeable
 
   default void get(long[] out, int start, int length)
   {
-    for (int i = 0; i < length; i++) {
+    for (int i = 0; i < length; i++) { // todo 凭什么就get index了？
       out[i] = get(i + start);
     }
   }
@@ -190,18 +190,18 @@ public interface ColumnarLongs extends Closeable
           return;
         }
 
-        if (offset.isContiguous()) {
+        if (offset.isContiguous()) { // 这两个get接口不一样
           if (offset.getStartOffset() < offsetMark) {
             nullIterator = nullValueBitmap.peekableIterator();
           }
-          offsetMark = offset.getStartOffset() + offset.getCurrentVectorSize();
+          offsetMark = offset.getStartOffset() + offset.getCurrentVectorSize(); // todo: 怎么知道要取几条？
           ColumnarLongs.this.get(longVector, offset.getStartOffset(), offset.getCurrentVectorSize());
         } else {
           final int[] offsets = offset.getOffsets();
           if (offsets[offsets.length - 1] < offsetMark) {
             nullIterator = nullValueBitmap.peekableIterator();
           }
-          offsetMark = offsets[offsets.length - 1];
+          offsetMark = offsets[offsets.length - 1]; // 看不懂这里
           ColumnarLongs.this.get(longVector, offsets, offset.getCurrentVectorSize());
         }
 

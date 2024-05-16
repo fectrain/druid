@@ -60,7 +60,7 @@ public class TableLongEncodingWriter implements CompressionFactory.LongEncodingW
   @Override
   public void write(long value) throws IOException
   {
-    serializer.write(table.get(value));
+    serializer.write(table.get(value)); // 默认大端序
   }
 
   @Override
@@ -99,5 +99,11 @@ public class TableLongEncodingWriter implements CompressionFactory.LongEncodingW
   public int getNumBytes(int values)
   {
     return VSizeLongSerde.getSerializedSize(bitsPerValue, values);
+  }
+
+  @Override
+  public int getEncodedSize()
+  {
+    return 0;
   }
 }
