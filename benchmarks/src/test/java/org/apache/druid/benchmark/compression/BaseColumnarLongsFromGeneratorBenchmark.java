@@ -56,7 +56,7 @@ public class BaseColumnarLongsFromGeneratorBenchmark extends BaseColumnarLongsBe
    * Value distributions to simulate various patterns of long column
    */
   @Param({
-      "sequential-100"
+      "sequential-unique"
   })
   String distribution;
 

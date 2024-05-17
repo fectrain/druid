@@ -46,6 +46,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
@@ -85,6 +86,7 @@ public class ColumnarLongsEncodeDataFromGeneratorBenchmark extends BaseColumnarL
         for (int i = 0; i < rows; i++) {
           long value;
           Object rowValue = valueGenerator.generateRowValue();
+
           value = rowValue != null ? (long) rowValue : 0;
           vals[i] = value;
           if (vals[i] < minValue) {
@@ -93,8 +95,13 @@ public class ColumnarLongsEncodeDataFromGeneratorBenchmark extends BaseColumnarL
           if (vals[i] > maxValue) {
             maxValue = vals[i];
           }
+        }
+        Arrays.sort(vals); // 排序
+        for (int i = 0; i < rows; i++) {
+//          System.out.println("rowValue: " + vals[i]);
           writer.write(vals[i] + "\n");
         }
+
       }
     }
   }
