@@ -1,4 +1,6 @@
 dist
+longCompress
+tmp
 target
 *.iml
 *.ipr
