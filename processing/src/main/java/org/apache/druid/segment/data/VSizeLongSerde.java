@@ -73,7 +73,7 @@ public class VSizeLongSerde
   {
     int ret = 1;
     while (getSerializedSize(bitsPerValue, ret) <= blockSize) {
-      ret *= 2;
+      ret *= 2; // todo 这里也可以优化 <<
     }
     return ret / 2;
   }

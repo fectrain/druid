@@ -34,6 +34,7 @@ import org.apache.druid.java.util.common.FileUtils;
 import org.apache.druid.java.util.common.IAE;
 import org.apache.druid.java.util.common.ISE;
 import org.apache.druid.java.util.common.JodaUtils;
+import org.apache.druid.java.util.common.granularity.Granularity;
 import org.apache.druid.java.util.common.guava.Comparators;
 import org.apache.druid.java.util.common.io.Closer;
 import org.apache.druid.java.util.common.io.smoosh.FileSmoosher;
@@ -147,7 +148,7 @@ public class IndexMergerV9 implements IndexMerger
     progress.progress();
 
     List<Metadata> metadataList = Lists.transform(adapters, IndexableAdapter::getMetadata);
-
+    // todo 为什么会有多个 adapters / metadata？
     final Metadata segmentMetadata;
     if (metricAggs != null) {
       AggregatorFactory[] combiningMetricAggs = new AggregatorFactory[metricAggs.length];
@@ -214,12 +215,12 @@ public class IndexMergerV9 implements IndexMerger
       /************* Setup Dim Conversions **************/
       progress.progress();
       startTime = System.currentTimeMillis();
-      writeDimValuesAndSetupDimConversion(adapters, progress, mergedDimensions, mergers);
+      writeDimValuesAndSetupDimConversion(adapters, progress, mergedDimensions, mergers); // merge dim value?
       log.debug("Completed dim conversions in %,d millis.", System.currentTimeMillis() - startTime);
 
       /************* Walk through data sets, merge them, and write merged columns *************/
       progress.progress();
-      final TimeAndDimsIterator timeAndDimsIterator = makeMergedTimeAndDimsIterator(
+      final TimeAndDimsIterator timeAndDimsIterator = makeMergedTimeAndDimsIterator( // merge time and dim
           adapters,
           mergedDimensions,
           mergedMetrics,
@@ -228,6 +229,17 @@ public class IndexMergerV9 implements IndexMerger
           mergers
       );
       closer.register(timeAndDimsIterator);
+
+      // todo
+      // get gran
+      Granularity queryGranularity = adapters.get(0).getMetadata().getQueryGranularity();
+//      queryGranularity.
+
+      // merge interval
+      adapters.get(0).getDataInterval();
+      // 算出 点数 size
+
+
       final GenericColumnSerializer timeWriter = setupTimeWriter(segmentWriteOutMedium, indexSpec);
       final ArrayList<GenericColumnSerializer> metricWriters =
           setupMetricsWriters(segmentWriteOutMedium, mergedMetrics, metricFormats, indexSpec);
@@ -596,6 +608,7 @@ public class IndexMergerV9 implements IndexMerger
     if (fillRowNumConversions) {
       rowNumConversions = new ArrayList<>(adapters.size());
       for (IndexableAdapter adapter : adapters) {
+//        adapter.
         int[] arr = new int[adapter.getNumRows()];
         Arrays.fill(arr, INVALID_ROW);
         rowNumConversions.add(IntBuffer.wrap(arr));
@@ -677,6 +690,7 @@ public class IndexMergerV9 implements IndexMerger
       IndexSpec indexSpec
   ) throws IOException
   {
+    // todo 怎么拿到start/ end time？
     GenericColumnSerializer timeWriter = createLongColumnSerializer(
         segmentWriteOutMedium,
         "little_end_time",
@@ -732,8 +746,8 @@ public class IndexMergerV9 implements IndexMerger
       IndexSpec indexSpec
   )
   {
-    CompressionFactory.LongEncodingStrategy encoding = columnName.equals("little_end_time")
-                                                       ? indexSpec.getTimeEncoding() // 不设置的话 默认是long
+    CompressionFactory.LongEncodingStrategy encoding = "little_end_time".equals(columnName)
+                                                       ? indexSpec.getTimeEncoding()
                                                        : indexSpec.getLongEncoding();
     // If using default values for null use LongColumnSerializer to allow rollback to previous versions.
     if (NullHandling.replaceWithDefault()) {
@@ -862,9 +876,13 @@ public class IndexMergerV9 implements IndexMerger
     if (index.isEmpty()) {
       throw new IAE("Trying to persist an empty index!");
     }
-
+    Granularity gran = index.getMetadata().getQueryGranularity();
     final DateTime firstTimestamp = index.getMinTime();
     final DateTime lastTimestamp = index.getMaxTime();
+    // todo 打包， 放哪里？
+//    firstTimestamp.getMillis();
+//    lastTimestamp.minus(firstTimestamp);
+
     if (!(dataInterval.contains(firstTimestamp) && dataInterval.contains(lastTimestamp))) {
       throw new IAE(
           "interval[%s] does not encapsulate the full range of timestamps[%s, %s]",
@@ -889,7 +907,7 @@ public class IndexMergerV9 implements IndexMerger
         // if index is rolled up, then it is no need to rollup again.
         //                     In this case, true/false won't cause reOrdering in merge stage
         //                     while merging a single iterable
-        false,
+        false, // todo, why?
         index.getMetricAggs(),
         index.getDimensionsSpec(),
         outDir,

@@ -102,7 +102,7 @@ public class ColumnarLongsSelectRowsFromGeneratorBenchmark extends BaseColumnarL
   {
     File dir = getTmpDir();
     File compFile = new File(dir, getGeneratorEncodedFilename(encoding, distribution, rows, zeroProbability));
-    ByteBuffer buffer = FileUtils.map(compFile).get();
+    ByteBuffer buffer = FileUtils.map(compFile).get(); // todo 这个file 怎么是空的？ 还真是
 
     int size = (int) compFile.length();
     encodedSize.put(encoding, size);

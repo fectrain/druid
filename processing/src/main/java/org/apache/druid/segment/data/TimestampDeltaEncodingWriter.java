@@ -19,7 +19,6 @@
 
 package org.apache.druid.segment.data;
 
-import com.google.common.primitives.Longs;
 import org.apache.druid.segment.writeout.WriteOutBytes;
 
 import javax.annotation.Nullable;
@@ -82,10 +81,8 @@ public class TimestampDeltaEncodingWriter implements CompressionFactory.LongEnco
       processVal(orderBuffer, value);
       // 3种情况， 空 / 放一个 / 放两个
       orderBuffer.flip();
-      if(orderBuffer.remaining() > 0) { // todo 还是有问题
-//        long val = orderBuffer.getLong();
-        byte[] a = Arrays.copyOfRange(orderBuffer.array(), orderBuffer.position(), orderBuffer.limit());
-        outStream.write(a); // 有可能超出
+      if (orderBuffer.remaining() > 0) {
+        outStream.write(Arrays.copyOfRange(orderBuffer.array(), orderBuffer.position(), orderBuffer.limit()));
       }
     }
   }
@@ -95,8 +92,17 @@ public class TimestampDeltaEncodingWriter implements CompressionFactory.LongEnco
     if (base == -1) {
       base = value;
       prev = base;
+      buf.putLong(0);
       return;
     }
+
+    if (buf.position() == 0) {
+      long baseDelta = value - base;
+      buf.putLong(baseDelta);
+      prev = value;
+      return;
+    }
+
     if (value == prev) {
       zeroCnt++;
     } else {
@@ -121,7 +127,6 @@ public class TimestampDeltaEncodingWriter implements CompressionFactory.LongEnco
         orderBuffer.clear();
         orderBuffer.putLong(-zeroCnt);
         orderBuffer.flip();
-//        long val = orderBuffer.getLong();
         outStream.write(Arrays.copyOfRange(orderBuffer.array(), orderBuffer.position(), orderBuffer.limit()));
       }
       zeroCnt = 0;

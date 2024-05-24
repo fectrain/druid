@@ -42,14 +42,14 @@ public class LongMaxVectorAggregator implements VectorAggregator
   @Override
   public void aggregate(final ByteBuffer buf, final int position, final int startRow, final int endRow)
   {
-    final long[] vector = selector.getLongVector();
+    final long[] vector = selector.getLongVector(); // batch 获取
 
     long max = buf.getLong(position);
     for (int i = startRow; i < endRow; i++) {
       max = Math.max(max, vector[i]);
     }
 
-    buf.putLong(position, max);
+    buf.putLong(position, max); // 放进buffer 中？
   }
 
   @Override

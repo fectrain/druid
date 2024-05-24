@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import static org.apache.druid.segment.data.CompressionFactory.LongEncodingStrategy.*;
 
 /**
  * Compression of metrics is done by using a combination of {@link CompressionStrategy}
@@ -64,7 +63,7 @@ public class CompressionFactory
     // No instantiation
   }
 
-  public static final LongEncodingStrategy DEFAULT_LONG_ENCODING_STRATEGY = LONGS;
+  public static final LongEncodingStrategy DEFAULT_LONG_ENCODING_STRATEGY = LongEncodingStrategy.LONGS;
 
   // encoding format for segments created prior to the introduction of encoding formats
   public static final LongEncodingFormat LEGACY_LONG_ENCODING_FORMAT = LongEncodingFormat.LONGS;
@@ -353,7 +352,7 @@ public class CompressionFactory
       Closer closer
   )
   {
-    if (encodingStrategy == AUTO) {
+    if (encodingStrategy == LongEncodingStrategy.AUTO) {
       return new IntermediateColumnarLongsSerializer(
           columnName,
           segmentWriteOutMedium,
@@ -362,8 +361,10 @@ public class CompressionFactory
           compressionStrategy,
           closer
       );
-    } else{
+    } else {
       CompressionFactory.LongEncodingWriter encodingWriter = getEncodingWriter(encodingStrategy, order);
+      int size = 60;
+
       if (compressionStrategy == CompressionStrategy.NONE) {
         return new EntireLayoutColumnarLongsSerializer(
             columnName,
@@ -382,7 +383,7 @@ public class CompressionFactory
         );
       }
     }
-}
+  }
 
   private static LongEncodingWriter getEncodingWriter(LongEncodingStrategy encodingStrategy, ByteOrder order)
   {

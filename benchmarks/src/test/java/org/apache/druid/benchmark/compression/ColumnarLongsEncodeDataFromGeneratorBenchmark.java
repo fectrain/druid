@@ -113,7 +113,7 @@ public class ColumnarLongsEncodeDataFromGeneratorBenchmark extends BaseColumnarL
   {
     File dir = getTmpDir();
     File columnDataFile = new File(dir, getGeneratorEncodedFilename(encoding, distribution, rows, zeroProbability));
-    columnDataFile.delete();
+    columnDataFile.delete(); // 跑一个看下咋回事？
     FileChannel output =
         FileChannel.open(columnDataFile.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
 

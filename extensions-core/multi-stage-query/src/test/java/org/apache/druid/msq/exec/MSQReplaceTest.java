@@ -1887,7 +1887,7 @@ public class MSQReplaceTest extends MSQTestBase
             "__time"))
         .build();
 
-    IndexSpec indexSpec = new IndexSpec(null, null, null, null, null, null, null);
+    IndexSpec indexSpec = new IndexSpec(null, null, null, null, null, null, null, null);
     GranularitySpec granularitySpec = new UniformGranularitySpec(
         segmentGranularity.getDefaultGranularity(),
         GranularityType.NONE.getDefaultGranularity(),

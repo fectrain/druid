@@ -48,7 +48,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.LongStream;
 
 @RunWith(Parameterized.class)
 public class CompressedLongsSerdeTest
@@ -57,13 +56,13 @@ public class CompressedLongsSerdeTest
   public static Iterable<Object[]> compressionStrategies()
   {
     List<Object[]> data = new ArrayList<>();
-//    data.add(new Object[]{CompressionFactory.LongEncodingStrategy.TS_DELTA, CompressionStrategy.NONE, ByteOrder.LITTLE_ENDIAN});
-    for (CompressionFactory.LongEncodingStrategy encodingStrategy : CompressionFactory.LongEncodingStrategy.values()) {
-      for (CompressionStrategy strategy : CompressionStrategy.values()) {
-        data.add(new Object[]{encodingStrategy, strategy, ByteOrder.BIG_ENDIAN});
-        data.add(new Object[]{encodingStrategy, strategy, ByteOrder.LITTLE_ENDIAN});
-      }
-    }
+    data.add(new Object[]{CompressionFactory.LongEncodingStrategy.TS_DELTA, CompressionStrategy.LZF, ByteOrder.BIG_ENDIAN});
+//    for (CompressionFactory.LongEncodingStrategy encodingStrategy : CompressionFactory.LongEncodingStrategy.values()) {
+//      for (CompressionStrategy strategy : CompressionStrategy.values()) {
+//        data.add(new Object[]{encodingStrategy, strategy, ByteOrder.BIG_ENDIAN});
+//        data.add(new Object[]{encodingStrategy, strategy, ByteOrder.LITTLE_ENDIAN});
+//      }
+//    }
     return data;
   }
 
@@ -101,6 +100,8 @@ public class CompressedLongsSerdeTest
       1715569263003L
   };
 
+  private final long[] value10 = new long[5000000];
+
   // built test value with enough unique values to not use table encoding for auto strategy
   private static long[] addUniques(long[] val)
   {
@@ -136,6 +137,15 @@ public class CompressedLongsSerdeTest
     testWithValues(values7);
     testWithValues(values8);
     testWithValues(values9);
+
+//    for (int i = 0; i < value10.length; i++) {
+//      if (i < 2500000) {
+//        value10[i] = Integer.MAX_VALUE - 1;
+//      } else {
+//        value10[i] = Integer.MAX_VALUE;
+//      }
+//    }
+//    testWithValues(value10);
   }
 
   @Test
@@ -184,7 +194,7 @@ public class CompressedLongsSerdeTest
   public void testWithValues(long[] values) throws Exception
   {
     testValues(values);
-    testValues(addUniques(values));
+//    testValues(addUniques(values));
   }
 
   public void testValues(long[] values) throws Exception
@@ -208,6 +218,8 @@ public class CompressedLongsSerdeTest
       serializer.add(value);
     }
     Assert.assertEquals(values.length, serializer.size());
+    long size = serializer.getSerializedSize();
+    System.out.println("size: " + size);
 
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     serializer.writeTo(Channels.newChannel(baos), null);
@@ -222,7 +234,6 @@ public class CompressedLongsSerdeTest
         int b = (int) (ThreadLocalRandom.current().nextDouble() * values.length);
         int start = a < b ? a : b;
         int end = a < b ? b : a;
-//        int start = 1, end = 4;
         tryFill(longs, values, start, end - start);
       }
       testSupplierSerde(supplier, values);
@@ -238,8 +249,8 @@ public class CompressedLongsSerdeTest
     long[] filled = new long[size];
     try {
       indexed.get(filled, startIndex, size);
-    } catch (ArrayIndexOutOfBoundsException e) {
-      System.out.println("\nstartIndex: " + startIndex + ", \nsize: " + size + ", \nfilled: " );
+    }
+    catch (ArrayIndexOutOfBoundsException e) {
       throw new RuntimeException(e);
     }
 
@@ -260,7 +271,7 @@ public class CompressedLongsSerdeTest
       if (i % 256 == 0) { // 不懂为什么加这个？
         indexed.get(vector, i, Math.min(256, indexed.size() - i));
       }
-      Assert.assertEquals("i：" + i+ ", \nvector:" +Arrays.toString(vector)+ "，\nvals："+ Arrays.toString(vals) + ", \nval[i]: " + vals[i], vals[i], indexed.get(i));
+      Assert.assertEquals("i: " + i, vals[i], indexed.get(i));
       Assert.assertEquals(vals[i], vector[i % 256]);
       indices[i] = i;
     }

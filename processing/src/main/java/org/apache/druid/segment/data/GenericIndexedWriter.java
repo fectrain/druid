@@ -252,7 +252,7 @@ public class GenericIndexedWriter<T> implements DictionaryWriter<T>
     // this field is used to store nullness marker, but in a better format this info can take 1 bit.
     valuesOut.writeInt(objectToWrite == null ? GenericIndexed.NULL_VALUE_SIZE_MARKER : 0); //valuesOut 一般是heap吧？用来装压缩后数据
     if (objectToWrite != null) {
-      strategy.writeTo(objectToWrite, valuesOut); // strategy是什么时候 构建的？ 这里值得应该就是LZ4
+      strategy.writeTo(objectToWrite, valuesOut); // 看下 objectToWrite 有多大，是谁的影响？valuesOut？
     }
 
     // Before updating the header, check if we need to switch to multi-file mode.
@@ -336,7 +336,7 @@ public class GenericIndexedWriter<T> implements DictionaryWriter<T>
       // for multi-file version (version 2), getSerializedSize() returns number of bytes in meta file.
       return MULTI_FILE_META_SERDE_HELPER.size(this);
     } else {
-      return SINGLE_FILE_META_SERDE_HELPER.size(this) + headerOut.size() + valuesOut.size();
+      return SINGLE_FILE_META_SERDE_HELPER.size(this) + headerOut.size() + valuesOut.size(); //7954
     }
   }
 

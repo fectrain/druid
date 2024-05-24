@@ -29,6 +29,7 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
 
   private ByteBuffer buffer;
   private final long base;
+  private long baseDelta;
 
   public TimestampDeltaEncodingReader(ByteBuffer fromBuffer, ByteOrder order)
   {
@@ -40,8 +41,8 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
     } else {
       throw new IAE("Unknown version[%s]", version);
     }
-    this.buffer = this.buffer.slice(); // 把meta 之前的 byte丢掉
-    this.buffer.order(order); // 为什么放在这里？
+    this.buffer = this.buffer.slice(); // 把 meta 之前的 byte丢掉
+    this.buffer.order(order);
   }
 
   private TimestampDeltaEncodingReader(ByteBuffer buffer, ByteOrder order, long base)
@@ -56,14 +57,17 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
   {
     // todo: 把long[] 解析出来， 这样就不用每次get，如何能让每个block 只decode 一次？反序列化的时候？
     // 不能，这么搞， 500w个ts 还是不下的， 1个8byte 8*500 000 = 40MB， 同时查询100个segment，岂不是4GB， 怪不得查询会导致内存溢出，需要load file 到内存
-    this.buffer = buffer.asReadOnlyBuffer();
+    this.baseDelta = buffer.getLong();
+
+    this.buffer = buffer.slice().asReadOnlyBuffer();
+    this.buffer.order(buffer.order());
     this.buffer.order(buffer.order());
   }
 
   @Override
   public long read(int index)
   {
-    buffer.rewind(); // todo 测试读多次 rewind 过头了？
+    buffer.rewind();
     int p = 0;
     long delta = 0;
     while (buffer.remaining() > 0 && p < index) {
@@ -75,14 +79,14 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
         p++;
       }
     }
-    return base + delta;
+    return base + baseDelta + delta;
   }
 
   @Override
   public void read(final long[] out, int outPosition, int startIndex, int length)
   {
     buffer.rewind(); // 还是说 不能rewind？
-    long prev = base;
+    long prev = baseDelta + base;
 
     int p = 0, curIndex = 0;
 
@@ -132,7 +136,7 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
     buffer.rewind();
     // 全部展开吧？试试benchmark
     long[] flatten = new long[limit];
-    flatten[0] = base;
+    flatten[0] = base + baseDelta;
     int p = 1;
     while (buffer.remaining() > 0 && p < limit) {
       long delta = buffer.getLong();

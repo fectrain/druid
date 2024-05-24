@@ -47,7 +47,7 @@ public class BlockLayoutColumnarLongsSerializer implements ColumnarLongsSerializ
   private final CompressionFactory.LongEncodingWriter writer;
   private final GenericIndexedWriter<ByteBuffer> flattener;
   private final CompressionStrategy compression;
-  private int numInserted = 0;
+  private int numInserted = 0; // totol size
   private int numInsertedForNextFlush;
 
   @Nullable
@@ -101,9 +101,9 @@ public class BlockLayoutColumnarLongsSerializer implements ColumnarLongsSerializ
     }
     if (numInserted == numInsertedForNextFlush) {
       numInsertedForNextFlush += sizePer;
-      writer.flush();
+      writer.flush(); //endBuffer 裁剪， 先确认是否有影响
       endBuffer.flip();
-      flattener.write(endBuffer);
+      flattener.write(endBuffer); // todo endBuffer 有多大？
       endBuffer.clear();
       writer.setBuffer(endBuffer);
     }
