@@ -50,6 +50,7 @@ public class LongColumnSerializerV2 implements GenericColumnSerializer<Object>
       String filenameBase,
       CompressionStrategy compression,
       CompressionFactory.LongEncodingStrategy encoding,
+      int sizePerBlock,
       BitmapSerdeFactory bitmapSerdeFactory
   )
   {
@@ -60,6 +61,7 @@ public class LongColumnSerializerV2 implements GenericColumnSerializer<Object>
         IndexIO.BYTE_ORDER,
         compression,
         encoding,
+        sizePerBlock,
         bitmapSerdeFactory
     );
   }
@@ -70,6 +72,7 @@ public class LongColumnSerializerV2 implements GenericColumnSerializer<Object>
   private final ByteOrder byteOrder;
   private final CompressionStrategy compression;
   private final CompressionFactory.LongEncodingStrategy encoding;
+  private final int sizePerBlock;
   private final BitmapSerdeFactory bitmapSerdeFactory;
 
   private ColumnarLongsSerializer writer;
@@ -84,6 +87,7 @@ public class LongColumnSerializerV2 implements GenericColumnSerializer<Object>
       ByteOrder byteOrder,
       CompressionStrategy compression,
       CompressionFactory.LongEncodingStrategy encoding,
+      int sizePerBlock,
       BitmapSerdeFactory bitmapSerdeFactory
   )
   {
@@ -93,6 +97,7 @@ public class LongColumnSerializerV2 implements GenericColumnSerializer<Object>
     this.byteOrder = byteOrder;
     this.compression = compression;
     this.encoding = encoding;
+    this.sizePerBlock = sizePerBlock;
     this.bitmapSerdeFactory = bitmapSerdeFactory;
   }
 
@@ -106,6 +111,7 @@ public class LongColumnSerializerV2 implements GenericColumnSerializer<Object>
         byteOrder,
         encoding,
         compression,
+        sizePerBlock,
         segmentWriteOutMedium.getCloser()
     );
     writer.open();

@@ -148,7 +148,6 @@ public class IndexMergerV9 implements IndexMerger
     progress.progress();
 
     List<Metadata> metadataList = Lists.transform(adapters, IndexableAdapter::getMetadata);
-    // todo 为什么会有多个 adapters / metadata？
     final Metadata segmentMetadata;
     if (metricAggs != null) {
       AggregatorFactory[] combiningMetricAggs = new AggregatorFactory[metricAggs.length];
@@ -220,7 +219,7 @@ public class IndexMergerV9 implements IndexMerger
 
       /************* Walk through data sets, merge them, and write merged columns *************/
       progress.progress();
-      final TimeAndDimsIterator timeAndDimsIterator = makeMergedTimeAndDimsIterator( // merge time and dim
+      final TimeAndDimsIterator timeAndDimsIterator = makeMergedTimeAndDimsIterator( // todo merge 之后是否依旧有序
           adapters,
           mergedDimensions,
           mergedMetrics,
@@ -230,17 +229,52 @@ public class IndexMergerV9 implements IndexMerger
       );
       closer.register(timeAndDimsIterator);
 
-      // todo
-      // get gran
-      Granularity queryGranularity = adapters.get(0).getMetadata().getQueryGranularity();
-//      queryGranularity.
+      // todo here
+//      int sizePerBlock = 0;
+//      if(indexSpec.getLongEncoding().equals(CompressionFactory.LongEncodingStrategy.TS_DELTA)) {
+//        Granularity queryGranularity = adapters.get(0).getMetadata().getQueryGranularity();
+//        long start = adapters.get(0).getDataInterval().getStartMillis();
+//        long end = queryGranularity.increment(start);
+//        long queryGran = end - start;
+//        List<Interval> intervalList = Lists.transform(adapters, IndexableAdapter::getDataInterval);
+//        long startMillis = 0;
+//        long endMillis = 0;
+//        for (Interval interval : intervalList) {
+//          if (interval.getStartMillis() < startMillis) {
+//            startMillis = interval.getStartMillis();
+//          }
+//          if (interval.getEndMillis() > endMillis) {
+//            endMillis = interval.getEndMillis();
+//          }
+//        }
+//        long segmentGran = endMillis - startMillis;
+//
+//        // 求出 segment Gran / query Gran
+//        int ratio = (int)(segmentGran / queryGran);
+//        int dataPoint;
+//
+//        switch (ratio) {
+//          case 1: // second
+//            dataPoint = 1;
+//            break;
+//          case 60: // minute
+//            dataPoint = 60;
+//            break;
+//          case 1440:
+//            dataPoint = ratio / 2; // 720 个block， 每个block： 5m / （1440 / 720 = 2） 个数
+//            break;
+//          case 3600:
+//            dataPoint = ratio / 5; // 720 个block， 每个block： 5m / （3600 / 720 = 5） 个数，720 是一个系数，先看下效果，之后再调整
+//            break;
+//          default:
+//            dataPoint = -1;
+//        }
+//
+//        int sumNumRows = adapters.stream().map(IndexableAdapter::getNumRows).reduce(0, Integer::sum);
+//        sizePerBlock = dataPoint > 0 ? sumNumRows / dataPoint : 0;
+//      }
 
-      // merge interval
-      adapters.get(0).getDataInterval();
-      // 算出 点数 size
-
-
-      final GenericColumnSerializer timeWriter = setupTimeWriter(segmentWriteOutMedium, indexSpec);
+      final GenericColumnSerializer timeWriter = setupTimeWriter(segmentWriteOutMedium, indexSpec, 0);
       final ArrayList<GenericColumnSerializer> metricWriters =
           setupMetricsWriters(segmentWriteOutMedium, mergedMetrics, metricFormats, indexSpec);
       IndexMergeResult indexMergeResult = mergeIndexesAndWriteColumns(
@@ -608,7 +642,6 @@ public class IndexMergerV9 implements IndexMerger
     if (fillRowNumConversions) {
       rowNumConversions = new ArrayList<>(adapters.size());
       for (IndexableAdapter adapter : adapters) {
-//        adapter.
         int[] arr = new int[adapter.getNumRows()];
         Arrays.fill(arr, INVALID_ROW);
         rowNumConversions.add(IntBuffer.wrap(arr));
@@ -619,7 +652,7 @@ public class IndexMergerV9 implements IndexMerger
     while (timeAndDimsIterator.moveToNext()) {
       progress.progress();
       TimeAndDimsPointer timeAndDims = timeAndDimsIterator.getPointer();
-      timeWriter.serialize(timeAndDims.timestampSelector);
+      timeWriter.serialize(timeAndDims.timestampSelector); // 判断在这之前 有序merge
 
       for (int metricIndex = 0; metricIndex < timeAndDims.getNumMetrics(); metricIndex++) {
         metricWriters.get(metricIndex).serialize(timeAndDims.getMetricSelector(metricIndex));
@@ -687,14 +720,15 @@ public class IndexMergerV9 implements IndexMerger
 
   private GenericColumnSerializer setupTimeWriter(
       SegmentWriteOutMedium segmentWriteOutMedium,
-      IndexSpec indexSpec
+      IndexSpec indexSpec,
+      int sizePerBlock
   ) throws IOException
   {
-    // todo 怎么拿到start/ end time？
     GenericColumnSerializer timeWriter = createLongColumnSerializer(
         segmentWriteOutMedium,
-        "little_end_time",
-        indexSpec
+        "little_end_time", // todo 提取常数
+        indexSpec,
+        sizePerBlock
     );
     // we will close this writer after we added all the timestamps
     timeWriter.open();
@@ -715,7 +749,7 @@ public class IndexMergerV9 implements IndexMerger
       GenericColumnSerializer writer;
       switch (type.getType()) {
         case LONG:
-          writer = createLongColumnSerializer(segmentWriteOutMedium, metric, indexSpec);
+          writer = createLongColumnSerializer(segmentWriteOutMedium, metric, indexSpec, 0);
           break;
         case FLOAT:
           writer = createFloatColumnSerializer(segmentWriteOutMedium, metric, indexSpec);
@@ -743,7 +777,8 @@ public class IndexMergerV9 implements IndexMerger
   static GenericColumnSerializer createLongColumnSerializer(
       SegmentWriteOutMedium segmentWriteOutMedium,
       String columnName,
-      IndexSpec indexSpec
+      IndexSpec indexSpec,
+      int sizePerBlock
   )
   {
     CompressionFactory.LongEncodingStrategy encoding = "little_end_time".equals(columnName)
@@ -756,7 +791,8 @@ public class IndexMergerV9 implements IndexMerger
           segmentWriteOutMedium,
           columnName,
           indexSpec.getMetricCompression(),
-          encoding
+          encoding,
+          sizePerBlock
       );
     } else {
       return LongColumnSerializerV2.create(
@@ -765,6 +801,7 @@ public class IndexMergerV9 implements IndexMerger
           columnName,
           indexSpec.getMetricCompression(),
           encoding,
+          sizePerBlock,
           indexSpec.getBitmapSerdeFactory()
       );
     }
@@ -876,12 +913,8 @@ public class IndexMergerV9 implements IndexMerger
     if (index.isEmpty()) {
       throw new IAE("Trying to persist an empty index!");
     }
-    Granularity gran = index.getMetadata().getQueryGranularity();
     final DateTime firstTimestamp = index.getMinTime();
     final DateTime lastTimestamp = index.getMaxTime();
-    // todo 打包， 放哪里？
-//    firstTimestamp.getMillis();
-//    lastTimestamp.minus(firstTimestamp);
 
     if (!(dataInterval.contains(firstTimestamp) && dataInterval.contains(lastTimestamp))) {
       throw new IAE(
@@ -897,7 +930,7 @@ public class IndexMergerV9 implements IndexMerger
     log.debug("Starting persist for interval[%s], rows[%,d]", dataInterval, index.size());
     return multiphaseMerge(
         Collections.singletonList(
-            new IncrementalIndexAdapter(
+            new IncrementalIndexAdapter( // 排序
                 dataInterval,
                 index,
                 indexSpec.getBitmapSerdeFactory().getBitmapFactory()
@@ -1169,7 +1202,7 @@ public class IndexMergerV9 implements IndexMerger
 
     Function<List<TransformableRowIterator>, TimeAndDimsIterator> rowMergerFn;
     if (rollup) {
-      rowMergerFn = rowIterators -> new RowCombiningTimeAndDimsIterator(rowIterators, sortedMetricAggs, mergedMetrics);
+      rowMergerFn = rowIterators -> new RowCombiningTimeAndDimsIterator(rowIterators, sortedMetricAggs, mergedMetrics); // 这个真的看不懂在 干什么
     } else {
       rowMergerFn = MergingRowIterator::new;
     }

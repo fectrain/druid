@@ -103,7 +103,7 @@ public class ColumnarLongsEncodeDataFromSegmentBenchmark extends BaseColumnarLon
     FileChannel output =
         FileChannel.open(columnDataFile.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
 
-    int size = BaseColumnarLongsBenchmark.encodeToFile(vals, encoding, output);
+    int size = BaseColumnarLongsBenchmark.encodeToFile(vals, encoding, output, blockCount);
     EncodingSizeProfiler.encodedSize = size;
     blackhole.consume(size);
     output.close();

@@ -99,15 +99,15 @@ public class BlockLayoutColumnarLongsSupplier implements Supplier<ColumnarLongs>
         {
           @Override
           public long get(int index)
-          {
+          { // 就这， 能快10ms ？
             // optimize division and remainder for powers of 2
-            final int bufferNum = index >> div;
+            final int bufferNum = index >> div; //
 
             if (bufferNum != currBufferNum) {
               loadBuffer(bufferNum);
             }
 
-            final int bufferIndex = index & rem;
+            final int bufferIndex = index & rem; // 8191
             return reader.read(bufferIndex);
           }
         };

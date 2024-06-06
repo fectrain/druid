@@ -98,6 +98,7 @@ public class ScalarLongColumnSerializer extends ScalarNestedCommonFormatColumnSe
         ByteOrder.nativeOrder(),
         indexSpec.getLongEncoding(),
         indexSpec.getDimensionCompression(),
+        0,
         segmentWriteOutMedium.getCloser()
     );
     longsSerializer.open();

@@ -347,8 +347,9 @@ public class CompressionFactory
       SegmentWriteOutMedium segmentWriteOutMedium,
       String filenameBase,
       ByteOrder order,
-      LongEncodingStrategy encodingStrategy,
+      LongEncodingStrategy encodingStrategy, // todo 这里传wrap （strategy + meta） carrier
       CompressionStrategy compressionStrategy,
+      int sizePerBlock,
       Closer closer
   )
   {
@@ -362,8 +363,8 @@ public class CompressionFactory
           closer
       );
     } else {
-      CompressionFactory.LongEncodingWriter encodingWriter = getEncodingWriter(encodingStrategy, order);
-      int size = 60;
+      // todo 在这里算 sizePerBlock, 但是不管怎样， 差数列表都得变。。
+      CompressionFactory.LongEncodingWriter encodingWriter = getEncodingWriter(encodingStrategy, order, sizePerBlock);
 
       if (compressionStrategy == CompressionStrategy.NONE) {
         return new EntireLayoutColumnarLongsSerializer(
@@ -385,13 +386,13 @@ public class CompressionFactory
     }
   }
 
-  private static LongEncodingWriter getEncodingWriter(LongEncodingStrategy encodingStrategy, ByteOrder order)
+  private static LongEncodingWriter getEncodingWriter(LongEncodingStrategy encodingStrategy, ByteOrder order, int sizePerBlock)
   {
     switch (encodingStrategy) {
       case LONGS:
         return new LongsLongEncodingWriter(order);
       case TS_DELTA:
-        return new TimestampDeltaEncodingWriter(order);
+        return new TimestampDeltaEncodingWriter(order, sizePerBlock);
       default:
         throw new IAE("unknown encoding strategy : %s", encodingStrategy.toString());
     }

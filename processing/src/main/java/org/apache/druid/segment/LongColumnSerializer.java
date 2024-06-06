@@ -40,10 +40,11 @@ public class LongColumnSerializer implements GenericColumnSerializer<Object>
       SegmentWriteOutMedium segmentWriteOutMedium,
       String filenameBase,
       CompressionStrategy compression,
-      CompressionFactory.LongEncodingStrategy encoding
+      CompressionFactory.LongEncodingStrategy encoding,
+      int sizePerBlock
   )
   {
-    return new LongColumnSerializer(columnName, segmentWriteOutMedium, filenameBase, IndexIO.BYTE_ORDER, compression, encoding);
+    return new LongColumnSerializer(columnName, segmentWriteOutMedium, filenameBase, IndexIO.BYTE_ORDER, compression, encoding, sizePerBlock);
   }
 
   private final String columnName;
@@ -52,6 +53,7 @@ public class LongColumnSerializer implements GenericColumnSerializer<Object>
   private final ByteOrder byteOrder;
   private final CompressionStrategy compression;
   private final CompressionFactory.LongEncodingStrategy encoding;
+  private final int sizePerBlock;
   private ColumnarLongsSerializer writer;
 
   private LongColumnSerializer(
@@ -60,7 +62,8 @@ public class LongColumnSerializer implements GenericColumnSerializer<Object>
       String filenameBase,
       ByteOrder byteOrder,
       CompressionStrategy compression,
-      CompressionFactory.LongEncodingStrategy encoding
+      CompressionFactory.LongEncodingStrategy encoding,
+      int sizePerBlock
   )
   {
     this.columnName = columnName;
@@ -69,6 +72,7 @@ public class LongColumnSerializer implements GenericColumnSerializer<Object>
     this.byteOrder = byteOrder;
     this.compression = compression;
     this.encoding = encoding;
+    this.sizePerBlock = sizePerBlock;
   }
 
   @Override
@@ -81,6 +85,7 @@ public class LongColumnSerializer implements GenericColumnSerializer<Object>
         byteOrder,
         encoding,
         compression,
+        sizePerBlock,
         segmentWriteOutMedium.getCloser()
     );
     writer.open();

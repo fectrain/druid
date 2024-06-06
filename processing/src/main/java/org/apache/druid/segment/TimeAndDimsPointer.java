@@ -151,7 +151,7 @@ public class TimeAndDimsPointer implements Comparable<TimeAndDimsPointer>
     long timestamp = getTimestamp();
     long rhsTimestamp = rhs.getTimestamp();
     int timestampDiff = Long.compare(timestamp, rhsTimestamp);
-    if (timestampDiff != 0) {
+    if (timestampDiff != 0) { // 还是会先排ts
       return timestampDiff;
     }
     for (int dimIndex = 0; dimIndex < dimensionSelectors.length; dimIndex++) {

@@ -70,6 +70,11 @@ public class BaseColumnarLongsBenchmark
   })
   String encoding;
 
+  @Param({
+      "77"
+  })
+  int blockCount;
+
   Random rand = new Random(0);
 
   long[] vals;
@@ -118,7 +123,6 @@ public class BaseColumnarLongsBenchmark
   void setupFilters(int rows, double filteredRowCountPercentage, String filterDistribution)
   { // 为什么通过row count 来确定 offset？
     final int filteredRowCount = (int) Math.floor(rows * filteredRowCountPercentage);
-
 
     if (filteredRowCount < rows) {
       switch (filterDistribution) {
@@ -229,11 +233,17 @@ public class BaseColumnarLongsBenchmark
     );
   }
 
-  static int encodeToFile(long[] vals, String encoding, FileChannel output)throws IOException
+  static int encodeToFile(long[] vals, String encoding, FileChannel output, int blockCount)throws IOException
   {
     SegmentWriteOutMedium writeOutMedium = new OnHeapMemorySegmentWriteOutMedium();
 
     ColumnarLongsSerializer serializer;
+
+    // todo 这个也没错啊
+//    int sizePerBlock = 5000000 / 305; // 16393
+//    int sizePerBlock = 16384;
+    int sizePerBlock = 65536;
+//    int sizePerBlock = 8192;
     switch (encoding) {
       case "lz4-longs":
         serializer = CompressionFactory.getLongSerializer(
@@ -243,6 +253,7 @@ public class BaseColumnarLongsBenchmark
             ByteOrder.LITTLE_ENDIAN,
             CompressionFactory.LongEncodingStrategy.LONGS,
             CompressionStrategy.LZ4,
+            sizePerBlock,
             writeOutMedium.getCloser()
         );
         break;
@@ -254,6 +265,7 @@ public class BaseColumnarLongsBenchmark
             ByteOrder.LITTLE_ENDIAN,
             CompressionFactory.LongEncodingStrategy.AUTO,
             CompressionStrategy.LZ4,
+            sizePerBlock,
             writeOutMedium.getCloser()
         );
         break;
@@ -265,6 +277,7 @@ public class BaseColumnarLongsBenchmark
             ByteOrder.LITTLE_ENDIAN,
             CompressionFactory.LongEncodingStrategy.LONGS,
             CompressionStrategy.NONE,
+            sizePerBlock,
             writeOutMedium.getCloser()
         );
         break;
@@ -276,6 +289,7 @@ public class BaseColumnarLongsBenchmark
             ByteOrder.LITTLE_ENDIAN,
             CompressionFactory.LongEncodingStrategy.AUTO,
             CompressionStrategy.NONE,
+            sizePerBlock,
             writeOutMedium.getCloser()
         );
         break;
@@ -287,6 +301,7 @@ public class BaseColumnarLongsBenchmark
                 ByteOrder.LITTLE_ENDIAN,
                 CompressionFactory.LongEncodingStrategy.LONGS,
                 CompressionStrategy.ZSTD,
+                sizePerBlock,
                 writeOutMedium.getCloser()
         );
         break;
@@ -298,6 +313,7 @@ public class BaseColumnarLongsBenchmark
                 ByteOrder.LITTLE_ENDIAN,
                 CompressionFactory.LongEncodingStrategy.AUTO,
                 CompressionStrategy.ZSTD,
+                sizePerBlock,
                 writeOutMedium.getCloser()
         );
         break;
@@ -309,6 +325,7 @@ public class BaseColumnarLongsBenchmark
             ByteOrder.LITTLE_ENDIAN,
             CompressionFactory.LongEncodingStrategy.TS_DELTA,
             CompressionStrategy.LZ4,
+            sizePerBlock,
             writeOutMedium.getCloser()
         );
         break;
@@ -320,6 +337,7 @@ public class BaseColumnarLongsBenchmark
             ByteOrder.LITTLE_ENDIAN,
             CompressionFactory.LongEncodingStrategy.TS_DELTA,
             CompressionStrategy.ZSTD,
+            sizePerBlock,
             writeOutMedium.getCloser()
         );
         break;
@@ -331,6 +349,7 @@ public class BaseColumnarLongsBenchmark
             ByteOrder.LITTLE_ENDIAN,
             CompressionFactory.LongEncodingStrategy.TS_DELTA,
             CompressionStrategy.NONE,
+            sizePerBlock,
             writeOutMedium.getCloser()
         );
         break;

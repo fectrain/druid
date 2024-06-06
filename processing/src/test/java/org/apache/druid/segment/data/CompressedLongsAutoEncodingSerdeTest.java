@@ -104,6 +104,7 @@ public class CompressedLongsAutoEncodingSerdeTest
         order,
         encodingStrategy,
         compressionStrategy,
+        0,
         segmentWriteOutMedium.getCloser()
     );
     serializer.open();

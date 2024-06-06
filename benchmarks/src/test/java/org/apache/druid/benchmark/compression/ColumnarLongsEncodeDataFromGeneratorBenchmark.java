@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Benchmark)
 @Fork(value = 1)
 @Warmup(iterations = 1)
-@Measurement(iterations = 1)
+@Measurement(iterations = 5)
 public class ColumnarLongsEncodeDataFromGeneratorBenchmark extends BaseColumnarLongsFromGeneratorBenchmark
 {
   @Setup
@@ -98,7 +98,6 @@ public class ColumnarLongsEncodeDataFromGeneratorBenchmark extends BaseColumnarL
         }
         Arrays.sort(vals); // 排序
         for (int i = 0; i < rows; i++) {
-//          System.out.println("rowValue: " + vals[i]);
           writer.write(vals[i] + "\n");
         }
 
@@ -117,7 +116,7 @@ public class ColumnarLongsEncodeDataFromGeneratorBenchmark extends BaseColumnarL
     FileChannel output =
         FileChannel.open(columnDataFile.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
 
-    int size = encodeToFile(vals, encoding, output);
+    int size = encodeToFile(vals, encoding, output, blockCount);
     EncodingSizeProfiler.encodedSize = size;
     blackhole.consume(size);
     output.close();

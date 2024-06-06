@@ -98,7 +98,7 @@ final class RowCombiningTimeAndDimsIterator implements TimeAndDimsIterator
   @Nullable
   private RowPointer nextRowPointer;
 
-  RowCombiningTimeAndDimsIterator(
+  RowCombiningTimeAndDimsIterator( // 这里是 index 连接处
       List<TransformableRowIterator> originalIterators,
       AggregatorFactory[] metricAggs,
       List<String> metricNames

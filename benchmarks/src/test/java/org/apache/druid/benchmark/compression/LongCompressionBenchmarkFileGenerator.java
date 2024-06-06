@@ -168,6 +168,7 @@ public class LongCompressionBenchmarkFileGenerator
               ByteOrder.nativeOrder(),
               encoding,
               compression,
+              0,
               segmentWriteOutMedium.getCloser()
           );
           try (

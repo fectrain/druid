@@ -29,7 +29,7 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
 
   private ByteBuffer buffer;
   private final long base;
-  private long baseDelta;
+  private int baseDelta;
 
   public TimestampDeltaEncodingReader(ByteBuffer fromBuffer, ByteOrder order)
   {
@@ -57,7 +57,7 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
   {
     // todo: 把long[] 解析出来， 这样就不用每次get，如何能让每个block 只decode 一次？反序列化的时候？
     // 不能，这么搞， 500w个ts 还是不下的， 1个8byte 8*500 000 = 40MB， 同时查询100个segment，岂不是4GB， 怪不得查询会导致内存溢出，需要load file 到内存
-    this.baseDelta = buffer.getLong();
+    this.baseDelta = buffer.getInt();
 
     this.buffer = buffer.slice().asReadOnlyBuffer();
     this.buffer.order(buffer.order());
@@ -71,7 +71,10 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
     int p = 0;
     long delta = 0;
     while (buffer.remaining() > 0 && p < index) {
-      long val = buffer.getLong();
+      long val = buffer.getInt();
+      if (val == Integer.MAX_VALUE) { // todo 多加一步解码看看，如果影响不大，可以做
+        return 0;
+      }
       if (val < 0) {
         p -= val;
       } else {
@@ -92,7 +95,7 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
 
     // 先对齐 startIndex, 将第一个position 放入
     while (buffer.remaining() > 0 && curIndex < startIndex) {
-      long delta = buffer.getLong();
+      long delta = buffer.getInt();
       if (delta < 0) {
         curIndex -= delta;
       } else {
@@ -113,7 +116,7 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
 
     // 补齐 startIndex 之后的
     while (buffer.remaining() > 0 && p < length) {
-      long delta = buffer.getLong();
+      long delta = buffer.getInt();
       if (delta < 0) {
         while (delta < 0 && p < length) {
           out[outPosition++] = prev;
@@ -139,7 +142,7 @@ public class TimestampDeltaEncodingReader implements CompressionFactory.LongEnco
     flatten[0] = base + baseDelta;
     int p = 1;
     while (buffer.remaining() > 0 && p < limit) {
-      long delta = buffer.getLong();
+      long delta = buffer.getInt();
       if (delta < 0) {
         for (int i = 0; i < -delta; i++) {
           flatten[p] = flatten[p - 1];

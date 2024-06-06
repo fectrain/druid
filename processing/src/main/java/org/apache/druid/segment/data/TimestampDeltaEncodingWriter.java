@@ -38,6 +38,8 @@ public class TimestampDeltaEncodingWriter implements CompressionFactory.LongEnco
   @Nullable
   private OutputStream outStream = null;
 
+  private int sizePer;
+
   private long base = -1;
 
   private long prev = -1;
@@ -46,10 +48,12 @@ public class TimestampDeltaEncodingWriter implements CompressionFactory.LongEnco
 
   private int encodedSize = 0;
 
-  public TimestampDeltaEncodingWriter(ByteOrder order)
+  public TimestampDeltaEncodingWriter(ByteOrder order, int sizePer)
   {
     this.order = order;
-    orderBuffer = ByteBuffer.allocate(Long.BYTES * 2);
+    this.sizePer = sizePer;
+//    System.out.println("**sizePer: "+ sizePer);
+    orderBuffer = ByteBuffer.allocate(Integer.BYTES * 2);
     orderBuffer.order(order);
   }
 
@@ -92,13 +96,13 @@ public class TimestampDeltaEncodingWriter implements CompressionFactory.LongEnco
     if (base == -1) {
       base = value;
       prev = base;
-      buf.putLong(0);
+      buf.putInt(0);
       return;
     }
 
     if (buf.position() == 0) {
       long baseDelta = value - base;
-      buf.putLong(baseDelta);
+      buf.putInt((int)baseDelta);
       prev = value;
       return;
     }
@@ -107,10 +111,10 @@ public class TimestampDeltaEncodingWriter implements CompressionFactory.LongEnco
       zeroCnt++;
     } else {
       if (zeroCnt != 0) {
-        buf.putLong(-zeroCnt);
+        buf.putInt(-zeroCnt);
         zeroCnt = 0;
       }
-      buf.putLong(value - prev);
+      buf.putInt((int)(value - prev));
       encodedSize++;
       prev = value;
     }
@@ -121,11 +125,11 @@ public class TimestampDeltaEncodingWriter implements CompressionFactory.LongEnco
   {
     if (zeroCnt != 0) {
       if (outBuffer != null) {
-        outBuffer.putLong(-zeroCnt);
+        outBuffer.putInt(-zeroCnt);
       }
       if (outStream != null) {
         orderBuffer.clear();
-        orderBuffer.putLong(-zeroCnt);
+        orderBuffer.putInt(-zeroCnt);
         orderBuffer.flip();
         outStream.write(Arrays.copyOfRange(orderBuffer.array(), orderBuffer.position(), orderBuffer.limit()));
       }
@@ -151,13 +155,15 @@ public class TimestampDeltaEncodingWriter implements CompressionFactory.LongEnco
   @Override
   public int getBlockSize(int bytesPerBlock)
   {
-    return bytesPerBlock / Long.BYTES;
+    // unrelevant with block bytes
+//    return bytesPerBlock / Integer.BYTES; // 唯一的区别就是这里了？sizePer 大小固定
+    return sizePer <= 0 ? bytesPerBlock / Integer.BYTES : sizePer;
   }
 
   @Override
   public int getNumBytes(int values)
   {
-    return values * Long.BYTES; //只要是以long 形式存储的就是
+    return values * Integer.BYTES; //只要是以long 形式存储的就是
   }
 
   @Override
